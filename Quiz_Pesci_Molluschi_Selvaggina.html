@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — Pesci · Molluschi · Crostacei · Selvaggina</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F0E8E0;
+    --parchment: #E2D4C4;
+    --warm-white: #FAF6F2;
+    --ink: #1A0A06;
+    --burgundy: #4A1020;
+    --wine: #7A1E38;
+    --gold: #A8760A;
+    --gold-light: #C9941A;
+    --copper: #9E4E1E;
+    --sage: #3A6B50;
+    --sage-light: #4E8A68;
+    --tomato: #B83224;
+    --advanced: #2A4A6B;
+    --advanced-light: #4A7AB0;
+    --advanced-bg: #E8EEF5;
+    --light-border: #C8B8A8;
+    --correct-bg: #E8F2EC;
+    --wrong-bg: #FAE8E6;
+    --review-bg: #FFF8E1;
+    --review-border: #D49820;
+    --shadow: 0 2px 16px rgba(26,10,6,0.09);
+    --shadow-lg: 0 8px 40px rgba(26,10,6,0.14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background-color: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 10% 20%, rgba(168,118,10,0.06) 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 80%, rgba(74,16,32,0.05) 0%, transparent 55%);
+  }
+  header {
+    background: var(--burgundy);
+    color: #fff;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+  }
+  .header-inner {
+    max-width: 900px; margin: 0 auto; padding: 14px 24px;
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  }
+  .header-title {
+    font-family: 'Playfair Display', serif; font-size: 1.15rem;
+    font-weight: 700; letter-spacing: 0.01em; flex: 1; min-width: 200px;
+  }
+  .header-title span { color: var(--gold-light); }
+  .score-badge {
+    background: var(--gold); color: var(--burgundy);
+    font-family: 'DM Mono', monospace; font-size: 0.85rem; font-weight: 600;
+    padding: 5px 14px; border-radius: 20px; white-space: nowrap;
+  }
+  .progress-bar-wrap { width: 100%; height: 3px; background: rgba(255,255,255,0.12); }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-light), var(--copper));
+    transition: width 0.4s ease; width: 0%;
+  }
+  .controls-bar {
+    background: var(--parchment); border-bottom: 1px solid var(--light-border);
+    position: sticky; top: 62px; z-index: 90;
+  }
+  .controls-inner {
+    max-width: 900px; margin: 0 auto; padding: 10px 24px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .ctrl-btn {
+    font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 500;
+    padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--light-border);
+    background: var(--warm-white); color: var(--burgundy); cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .ctrl-btn:hover { background: var(--burgundy); color: #fff; border-color: var(--burgundy); }
+  .ctrl-btn.danger:hover { background: var(--tomato); border-color: var(--tomato); color: #fff; }
+  main { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  .section-divider { margin: 60px 0 48px; }
+  .section-divider-banner {
+    background: linear-gradient(135deg, var(--advanced) 0%, #3A5F8A 100%);
+    border-radius: 14px; padding: 28px 32px; color: #fff;
+    box-shadow: 0 8px 32px rgba(42,74,107,0.25); position: relative; overflow: hidden;
+  }
+  .section-divider-banner::before {
+    content: ''; position: absolute; top: -30px; right: -30px;
+    width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.05);
+  }
+  .adv-badge {
+    display: inline-block; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; padding: 4px 12px; margin-bottom: 12px;
+  }
+  .adv-title {
+    font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 8px;
+  }
+  .adv-subtitle { font-size: 0.85rem; opacity: 0.82; line-height: 1.5; max-width: 560px; }
+  .adv-stats { display: flex; gap: 24px; margin-top: 18px; flex-wrap: wrap; }
+  .adv-stat { display: flex; align-items: center; gap: 7px; font-size: 0.8rem; opacity: 0.87; }
+  .adv-stat-num { font-family: 'DM Mono', monospace; font-size: 1.1rem; font-weight: 500; }
+
+  .chapter-header {
+    display: flex; align-items: center; gap: 16px; margin: 48px 0 28px;
+  }
+  .chapter-header:first-child { margin-top: 0; }
+  .chapter-line { flex: 1; height: 1px; background: var(--light-border); }
+  .chapter-line.adv { background: rgba(42,74,107,0.25); }
+  .chapter-label {
+    font-family: 'Playfair Display', serif; font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--copper); white-space: nowrap;
+  }
+  .chapter-label.adv { color: var(--advanced-light); }
+  .chapter-title {
+    text-align: center; font-family: 'Playfair Display', serif; font-size: 1.5rem;
+    color: var(--burgundy); margin-bottom: 4px; font-weight: 700;
+  }
+  .chapter-subtitle {
+    text-align: center; font-size: 0.8rem; color: #999; letter-spacing: 0.05em;
+    text-transform: uppercase; margin-bottom: 28px;
+  }
+
+  .question-card {
+    background: var(--warm-white); border: 1px solid var(--light-border); border-radius: 12px;
+    padding: 24px 28px; margin-bottom: 20px; box-shadow: var(--shadow);
+    transition: box-shadow 0.2s, border-color 0.2s; position: relative; scroll-margin-top: 130px;
+  }
+  .question-card.adv-card { border-left: 3px solid rgba(42,74,107,0.2); }
+  .question-card.answered-correct { border-color: var(--sage-light); background: var(--correct-bg); }
+  .question-card.answered-wrong { border-color: #d97070; background: var(--wrong-bg); }
+  .question-card.marked { border-left: 4px solid var(--review-border); }
+  .question-card.hidden { display: none; }
+
+  .q-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .q-number {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; font-weight: 500;
+    color: var(--copper); background: rgba(158,78,30,0.1); padding: 2px 8px; border-radius: 10px;
+  }
+  .q-number.adv { color: var(--advanced-light); background: rgba(42,74,107,0.1); }
+  .q-type-badge { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #aaa; }
+  .mark-btn {
+    margin-left: auto; background: none; border: none; cursor: pointer; font-size: 1.1rem;
+    opacity: 0.4; transition: opacity 0.2s, transform 0.2s; padding: 2px; line-height: 1;
+  }
+  .mark-btn:hover, .mark-btn.active { opacity: 1; transform: scale(1.2); }
+  .mark-btn.active { color: var(--review-border); }
+  .q-text {
+    font-family: 'Playfair Display', serif; font-size: 1.0rem; line-height: 1.55;
+    color: var(--burgundy); margin-bottom: 18px; font-weight: 400;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 9px; }
+  .option-btn {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px;
+    background: var(--bg); border: 1.5px solid var(--light-border); border-radius: 8px;
+    cursor: pointer; text-align: left; font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+    line-height: 1.4; color: var(--ink); transition: all 0.18s; width: 100%;
+  }
+  .option-btn:hover:not(:disabled) { border-color: var(--gold); background: rgba(168,118,10,0.06); }
+  .option-btn .opt-letter {
+    font-family: 'DM Mono', monospace; font-size: 0.75rem; font-weight: 500;
+    background: var(--parchment); border-radius: 5px; padding: 2px 7px;
+    flex-shrink: 0; margin-top: 1px; transition: background 0.18s, color 0.18s;
+  }
+  .option-btn.correct { background: #d8f0e8; border-color: var(--sage); color: #1a3c2a; }
+  .option-btn.correct .opt-letter { background: var(--sage); color: #fff; }
+  .option-btn.wrong { background: #fae0e0; border-color: var(--tomato); color: #5a1010; }
+  .option-btn.wrong .opt-letter { background: var(--tomato); color: #fff; }
+  .option-btn:disabled { cursor: default; }
+  .option-btn .opt-icon { margin-left: auto; font-size: 1rem; flex-shrink: 0; }
+
+  .vf-options { display: flex; gap: 12px; }
+  .vf-btn {
+    flex: 1; padding: 13px; border: 1.5px solid var(--light-border); border-radius: 8px;
+    background: var(--bg); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+    font-weight: 600; letter-spacing: 0.04em; transition: all 0.18s; text-align: center;
+  }
+  .vf-btn:hover:not(:disabled) { border-color: var(--gold); background: rgba(168,118,10,0.06); }
+  .vf-btn.correct { background: #d8f0e8; border-color: var(--sage); color: #1a3c2a; }
+  .vf-btn.wrong { background: #fae0e0; border-color: var(--tomato); color: #5a1010; }
+  .vf-btn:disabled { cursor: default; }
+
+  .feedback {
+    margin-top: 14px; padding: 13px 16px; border-radius: 8px; font-size: 0.85rem;
+    line-height: 1.55; display: none; animation: fadeSlide 0.3s ease;
+  }
+  @keyframes fadeSlide { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .feedback.show { display: block; }
+  .feedback.correct-fb { background: rgba(58,107,80,0.1); border: 1px solid rgba(58,107,80,0.28); color: #1a3c2a; }
+  .feedback.wrong-fb { background: rgba(184,50,36,0.08); border: 1px solid rgba(184,50,36,0.25); color: #5a1010; }
+  .feedback strong { font-weight: 600; display: block; margin-bottom: 5px; }
+  .feedback .correct-answer { font-weight: 600; color: var(--sage); margin-bottom: 4px; display: block; }
+
+  #results-panel {
+    display: none; position: fixed; inset: 0; background: rgba(26,10,6,0.72);
+    z-index: 200; align-items: center; justify-content: center; padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  #results-panel.show { display: flex; }
+  .results-box {
+    background: var(--warm-white); border-radius: 16px; max-width: 600px; width: 100%;
+    max-height: 85vh; overflow-y: auto; padding: 40px 36px;
+    box-shadow: var(--shadow-lg); animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn { from { transform:scale(0.85); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .results-emoji { font-size: 3rem; text-align: center; margin-bottom: 10px; }
+  .results-title { font-family: 'Playfair Display', serif; font-size: 1.7rem; text-align: center; color: var(--burgundy); margin-bottom: 6px; font-weight: 700; }
+  .results-score-big { font-family: 'DM Mono', monospace; font-size: 3.5rem; font-weight: 500; text-align: center; color: var(--tomato); line-height: 1; margin: 16px 0; }
+  .results-score-big.good { color: var(--sage); }
+  .results-score-big.ok { color: var(--gold); }
+  .results-sub { text-align: center; color: #888; font-size: 0.85rem; margin-bottom: 24px; }
+  .results-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .breakdown-item { background: var(--parchment); border-radius: 10px; padding: 14px; text-align: center; }
+  .breakdown-item .bi-num { font-family: 'DM Mono', monospace; font-size: 1.5rem; font-weight: 500; display: block; }
+  .breakdown-item .bi-label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.06em; }
+  .breakdown-item.green .bi-num { color: var(--sage); }
+  .breakdown-item.red .bi-num { color: var(--tomato); }
+  .breakdown-item.yellow .bi-num { color: var(--gold); }
+  .results-section-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #bbb; margin: 16px 0 8px; padding-left: 4px; }
+  .results-section-label.adv { color: var(--advanced-light); }
+  .results-chapter { margin-bottom: 8px; padding: 12px 16px; background: var(--bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+  .results-chapter.adv-chapter { background: rgba(42,74,107,0.05); border-left: 3px solid rgba(42,74,107,0.2); }
+  .results-chapter span { font-weight: 600; }
+  .ch-score { font-family: 'DM Mono', monospace; }
+  .results-actions { display: flex; gap: 12px; margin-top: 20px; }
+  .res-btn { flex: 1; padding: 13px; border-radius: 8px; border: none; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .res-btn.primary { background: var(--burgundy); color: #fff; }
+  .res-btn.primary:hover { background: var(--wine); }
+  .res-btn.secondary { background: var(--parchment); color: var(--burgundy); }
+  .res-btn.secondary:hover { background: var(--light-border); }
+
+  #toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--burgundy); color: #fff; padding: 12px 22px; border-radius: 30px;
+    font-size: 0.85rem; font-weight: 500; z-index: 300;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  .answered-stamp { position: absolute; top: 18px; right: 56px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.5; }
+  .answered-stamp.ok { color: var(--sage); }
+  .answered-stamp.ko { color: var(--tomato); }
+  @media (max-width: 600px) {
+    .question-card { padding: 18px 16px; }
+    .results-breakdown { grid-template-columns: 1fr 1fr; }
+    main { padding: 20px 14px 60px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="header-title">Quiz <span>Pesci · Molluschi · Selvaggina</span></div>
+    <div class="score-badge" id="score-badge">0 / 0</div>
+    <button class="ctrl-btn" onclick="showResults()" style="background:var(--gold);border-color:var(--gold);color:var(--burgundy);font-weight:600;">📊 Risultati</button>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar"></div></div>
+</header>
+<div class="controls-bar">
+  <div class="controls-inner">
+    <button class="ctrl-btn" onclick="filterQuestions('all')">📋 Tutte</button>
+    <button class="ctrl-btn" onclick="filterQuestions('unanswered')">⏳ Da rispondere</button>
+    <button class="ctrl-btn" onclick="filterQuestions('marked')">🔖 Segnate</button>
+    <button class="ctrl-btn" onclick="filterQuestions('wrong')">❌ Sbagliate</button>
+    <button class="ctrl-btn danger" onclick="confirmReset()">🔄 Ricomincia</button>
+  </div>
+</div>
+<main id="quiz-main"></main>
+<div id="results-panel"><div class="results-box" id="results-box"></div></div>
+<div id="toast"></div>
+<script>
+const chapters = [
+  {
+    title:"Sistematica e Classificazione",
+    subtitle:"Sezione 1 — Pesci, Molluschi e Crostacei: basi classificatorie",
+    qs:[
+      {n:1,type:"mc",q:"Secondo la zoologia moderna, i pesci sono considerati:",opts:["Una classe sistematica dei vertebrati riconosciuta universalmente","Un raggruppamento privo di validità tassonomica (parafiletico), accomunati da tratti evolutivamente convergenti","Un subphylum distinto dagli invertebrati","Un phylum del regno animale equivalente agli artropodi"],correct:1,exp:"La zoologia moderna considera i pesci un raggruppamento parafiletico privo di validità tassonomica: il termine descrive tratti convergenti (corpo idrodinamico, pinne, branchie) non una singola linea evolutiva. Comprende Osteitti, Condroitti e forme affini."},
+      {n:2,type:"mc",q:"Gli Osteitti si distinguono dai Condroitti principalmente per:",opts:["L'assenza totale di scaglie sul corpo","La posizione infera della bocca e pinna caudale asimmetrica","Presenza di vescica natatoria, opercolo branchiale e bocca in posizione terminale","Il fatto di vivere esclusivamente in acque dolci"],correct:2,exp:"Gli Osteitti: scheletro osseo, bocca terminale, vescica natatoria idrostatica, branchie coperte da opercolo mobile. I Condroitti: bocca infera, pinna caudale asimmetrica (eterocerca), assenza di vescica natatoria e opercolo."},
+      {n:3,type:"mc",q:"Quale coppia rappresenta i due ordini principali dei Cefalopodi, basata sul numero di braccia?",opts:["Bivalvia e Gastropoda","Dibranchiata e Tetrabranchiata","Ottopoda e Decapodiformes","Nautiloidea e Coleoidea"],correct:2,exp:"Ottopoda = 8 braccia (polpo, polpessa, moscardino). Decapodiformes = 8 braccia + 2 tentacoli (seppia, calamaro, totano, seppiola). Le opzioni A e D riguardano altre classificazioni."},
+      {n:4,type:"mc",q:"La Canocchia (Squilla mantis) appartiene a quale ordine di crostacei?",opts:["Decapoda — forma Astacoide","Decapoda — forma Caridoide","Stomatopoda","Malacostraca — forma Cancroide"],correct:2,exp:"La Canocchia appartiene all'ordine Stomatopoda — circa 200 specie, di cui 7 nel Mediterraneo. È distinta dai Decapodi pur appartenendo entrambi alla classe Malacostraca."},
+      {n:5,type:"vf",q:"I pesci cartilaginei (Condroitti) possiedono la vescica natatoria come i pesci ossei.",correct:false,exp:"I Condroitti (squali, razze) sono privi di vescica natatoria. Questo spiega perché certi squali devono nuotare continuamente per non affondare: usano il fegato ricco di olio (meno denso dell'acqua) per la galleggiabilità."},
+      {n:6,type:"vf",q:"I molluschi costituiscono il secondo phylum del regno animale per numero di specie.",correct:true,exp:"I molluschi sono il secondo phylum per numero di specie dopo gli Artropodi, con circa 13.000 specie di bivalvi, oltre 80.000 gasteropodi e molte centinaia di cefalopodi conosciuti."},
+      {n:7,type:"vf",q:"La denominazione 'pesce azzurro' ha valore tassonomico scientifico preciso.",correct:false,exp:"'Pesce azzurro' è una definizione merceologico-gastronomica (colorazione dorsale blu/verde/argentea, vita pelagica, carni grasse, valore commerciale spesso esiguo) — nessuna validità tassonomica scientifica."},
+      {n:8,type:"mc",q:"Nei Cefalopodi Dibranchiati rientrano:",opts:["Solo le specie con conchiglia esterna (Nautilus)","Polpo, seppia, calamaro, totano — tutti con un solo paio di branchie","Esclusivamente specie con due paia di branchie","Solo le specie prive di conchiglia interna"],correct:1,exp:"Dibranchiati = un solo paio di branchie. Comprende tutti i cefalopodi di interesse gastronomico: polpo, polpessa, moscardino, seppia, calamaro, totano, seppiola. Tetrabranchiati (due paia) = solo i Nautiloidea."},
+      {n:9,type:"vf",q:"La Sardina pilchardus è l'unica specie del genere Sardina.",correct:true,exp:"Sardina pilchardus è l'unica specie del genere Sardina, famiglia Clupeidae. Raggiunge i 27 cm nel Mediterraneo occidentale. Il 'bianchetto' è il novellame della sardina, pescato con deroghe specifiche."},
+      {n:10,type:"mc",q:"Il bisso nei molluschi bivalvi è:",opts:["Il muscolo che regola l'apertura e chiusura delle valve","Un fascio filamentoso (presente in alcuni ordini, es. Mytiloida) per l'ancoraggio al substrato","La struttura rigida interna dei Cefalopodi","Il sistema di sifoni per la filtrazione dell'acqua"],correct:1,exp:"Il bisso è un fascio di filamenti proteici cheratino-simili prodotto dalle cozze (Mytiloida) per ancorarsi a superfici dure. NON è universale nei bivalvi: cappasante, vongole e ostriche non lo producono."},
+    ]
+  },
+  {
+    title:"Morfologia e Anatomia",
+    subtitle:"Sezione 2 — Strutture interne ed esterne: pesci, molluschi, crostacei",
+    qs:[
+      {n:11,type:"mc",q:"I pesci 'piatti' (es. sogliola) si distinguono dai pesci 'tondi' perché:",opts:["Sono tutti pesci cartilaginei con scheletro ridotto","Nuotano orizzontalmente e hanno entrambi gli occhi sullo stesso lato della testa","Non presentano alcuna pinna laterale","Vivono esclusivamente su fondali rocciosi profondi"],correct:1,exp:"I pesci piatti: dagli avannotti (forma affusolata) subiscono una metamorfosi in cui cranio, occhi e organi migrano su un lato — si adattano alla vita sui fondali marini. Nuotano 'sdraiati' orizzontalmente."},
+      {n:12,type:"mc",q:"Qual è la funzione principale della vescica natatoria nei pesci ossei?",opts:["Filtrare l'ossigeno disciolto nell'acqua","Attrarre prede luminose negli abissi","Camera d'aria idrostatica: permette di salire o scendere acquistando o perdendo gas","Organo sensoriale per rilevare variazioni di pressione"],correct:2,exp:"La vescica natatoria è una camera d'aria idrostatica: acquisendo gas (principalmente O₂) il pesce sale, espellendolo scende. Permette di mantenere la profondità senza sforzo muscolare continuo."},
+      {n:13,type:"mc",q:"Nel Calamaro (Loligo vulgaris), la conchiglia interna ridotta è chiamata:",opts:["Osso di seppia","Gladio o penna","Bisso","Illicio"],correct:1,exp:"Gladio o penna = conchiglia interna ridotta e flessibile del calamaro. L'osso di seppia è più calcificato e rigido. L'illicio è l'organo-esca della rana pescatrice. Il bisso è dei bivalvi."},
+      {n:14,type:"mc",q:"In cosa differisce morfologicamente il Totano (Ommastrephes sagittatus) dal Calamaro (Loligo vulgaris)?",opts:["Il totano ha otto braccia, il calamaro ne ha sei","Le pinne del totano sono più corte ma più pronunciate, triangolari; quelle del calamaro si estendono lungo tutta la sacca","Il totano ha conchiglia esterna, il calamaro no","Il calamaro è sempre più grande del totano"],correct:1,exp:"Totano: pinne triangolari più corte ma più pronunciate, che partono dai ¾ del corpo (non dalla base). Calamaro: pinne allungate che si estendono per tutta la lunghezza della sacca, formando un caratteristico triangolo allungato."},
+      {n:15,type:"vf",q:"La pinna adiposa è una caratteristica tipica dei Salmonidi, posta anteriormente alla pinna caudale, priva di raggi ossei.",correct:true,exp:"La pinna adiposa è un piccolo lembo di tessuto adiposo sul dorso tra la prima dorsale e la caudale, priva di raggi ossei. Carattere diagnostico dei Salmonidi (trote, salmoni, salmerini, coregoni, timalli)."},
+      {n:16,type:"vf",q:"Il bisso è presente in tutte le specie di bivalvi senza eccezione.",correct:false,exp:"Il bisso è presente solo in alcuni ordini (Mytiloida — cozze). Molti bivalvi (ostriche, vongole, cappasante adulte) ne sono privi: si ancorano con muscoli adduttori o si spostano autonomamente."},
+      {n:17,type:"mc",q:"Nell'Astice europeo (Homarus gammarus), quale caratteristica distingue il maschio dalla femmina?",opts:["Il maschio ha chele più piccole e addome più ampio","Il maschio ha chele più grandi e corpo snello; la femmina ha addome più ampio con segmenti ventrali più concavi","La femmina è sempre più grande del maschio","Il maschio è privo di rostro dentellato"],correct:1,exp:"Nell'astice il dimorfismo sessuale è palese: il maschio ha chele più grandi, corpo snello. La femmina ha addome più ampio e concavo per portare le uova attaccate ai pleopodi."},
+      {n:18,type:"mc",q:"Nel Pesce prete (Uranoscopus scaber), cosa rende la sua morfologia così adatta alla predazione d'agguato sul fondale?",opts:["Le pinne pettorali enormi che lo rendono invisibile nella sabbia","Testa piatta con occhi, narici e bocca rivolti verso l'alto + appendice vermiforme sulla mandibola come esca; infossato nel fondale aspetta le prede","Solo la colorazione mimetica brunastro — analoga alla razza chiodata","Il corpo nastriforme che imita le alghe sul fondale"],correct:1,exp:"Il Pesce prete è un predatore d'agguato: si infossa nei fondali sabbiosi con solo gli occhi e la bocca emergenti (rivolti verso l'alto), usa l'appendice vermiforme come esca. La spina opercolare velenifera lo difende dai predatori."},
+      {n:19,type:"mc",q:"Nei gasteropodi di interesse gastronomico, la 'torsione dei visceri' determina:",opts:["La simmetria perfetta del corpo","L'asimmetria corporea: capo definito anteriormente, piede muscolare ventrale strisciante","La fusione delle due valve della conchiglia","Lo sviluppo dell'opercolo corneo"],correct:1,exp:"La torsione dei visceri (avviene nello stadio larvale) determina l'asimmetria caratteristica: capo anteriore con occhi e tentacoli, piede muscolare ventrale strisciante, sacca viscerale elicoidale protetta dalla conchiglia univalve."},
+      {n:20,type:"mc",q:"Nei crostacei, il segmento terminale del corpo, sempre apodo (privo di appendici), si chiama:",opts:["Cefalotorace","Telson","Nauplio","Zoea"],correct:1,exp:"Telson = segmento terminale apodo (senza appendici). Nei decapodi forma spesso, insieme agli ultimi pleopodi, la coda a ventaglio (uropodi + telson). Nauplio e zoea sono stadi larvali; cefalotorace è la fusione capo-torace."},
+    ]
+  },
+  {
+    title:"La Pesca",
+    subtitle:"Sezione 3 — Sistemi, attrezzi, zone FAO e normativa",
+    qs:[
+      {n:21,type:"mc",q:"La pesca mediterranea d'altura richiede navi di categoria non inferiore alla:",opts:["Prima categoria (navi oceaniche)","Seconda categoria (min. 30 t.s.l. con dotazioni di sicurezza)","Terza categoria","Quarta categoria"],correct:1,exp:"Pesca mediterranea d'altura: navi non inferiori alla II categoria (min. 30 t.s.l. con dotazioni di sicurezza). Cicli di battuta 30-40 giorni. La I categoria è per la grande pesca oceanica (oltre gli Stretti)."},
+      {n:22,type:"mc",q:"Quale sistema di pesca è classificato come 'attivo'?",opts:["Nasse (cattura tramite esche)","Reti da posta fissa (il pesce si impiglia)","Reti a strascico con divergenti (trainate sul fondo)","Palangaro fisso ancorato al fondo"],correct:2,exp:"Le reti a strascico sono ATTIVE: vengono trascinate dal natante e catturano nel progressivo avanzamento. Nasse, reti da posta fissa e palangari fissi sono passivi (aspettano che il pesce li incontri)."},
+      {n:23,type:"mc",q:"Le reti da posta derivanti sono vietate nelle acque territoriali europee perché:",opts:["Danneggiano le navi da pesca di altre nazioni","Si muovono con le correnti, intrappolano i pesci alle branchie, sono molto poco selettive e i danni al pescato sono notevoli","Catturano esclusivamente specie protette","Violano le quote FAO per le zone 37.1"],correct:1,exp:"Le reti derivanti si muovono con le correnti, intrappolano pesci (specie pelagiche pregiate come tonno, pesce spada) per le branchie, sono molto poco selettive. Vietate nelle acque territoriali europee."},
+      {n:24,type:"mc",q:"Le draghe turbosoffianti sono principalmente usate per la cattura di:",opts:["Pesci pelagici come acciughe e sardine","Crostacei come aragoste nei fondali rocciosi","Molluschi bivalvi (vongole, cannolicchi) infossati nel substrato sabbioso","Pesci bentonici come tracine e scorfani"],correct:2,exp:"Le draghe penetrano nel substrato sabbioso per strappare molluschi bivalvi infossati. Le turbosoffianti usano un getto d'acqua per sospendere gli organismi prima di aspirarli — molto distruttive per l'habitat bentonico."},
+      {n:25,type:"mc",q:"La zona FAO 37 comprende:",opts:["Oceano Atlantico nord-orientale (dalle Svalbard al Portogallo)","Mar Mediterraneo e Mar Nero","Oceano Pacifico centro-occidentale","Oceano Indiano meridionale"],correct:1,exp:"Zona FAO 37 = Mar Mediterraneo e Mar Nero. Sottozone: 37.1 (Mediterraneo occidentale), 37.2 (Mediterraneo centrale — Adriatico 37.2.1 e Ionio 37.2.2), 37.3 (Mediterraneo orientale), 37.4 (Mar Nero)."},
+      {n:26,type:"vf",q:"Per il pesce pescato in acque interne o di allevamento è obbligatorio indicare la zona di cattura FAO.",correct:false,exp:"Per pesce di acqua interna o allevamento: sufficiente indicare il Paese di cattura/allevamento. La zona FAO è obbligatoria solo per il pesce pescato in mare — differenza fondamentale per l'etichettatura."},
+      {n:27,type:"mc",q:"Il palangaro fisso cattura prevalentemente:",opts:["Specie pelagiche come tonno e pesce spada","Specie demersali come spigole, orate e saraghi (ancorato al fondo)","Molluschi bivalvi nelle lagune costiere","Gamberetti nei fondali sabbiosi"],correct:1,exp:"Palangaro fisso: ancorato al fondo, cattura specie demersali (spigola, orata, sarago). Palangaro derivante: calato a mezz'acqua, cattura specie pelagiche (tonno, pesce spada, aguglia imperiale, alalunga)."},
+      {n:28,type:"mc",q:"Le reti a circuizione sono utilizzate soprattutto per:",opts:["Catturare specie bentoniche vicino al fondale","Circondare e catturare banchi di pesci pelagici (acciughe, sardine, sgombri)","Pescare cefalopodi in alto mare","Catturare crostacei come aragoste"],correct:1,exp:"Le reti a circuizione (o 'cianciole') sono enormi reti usate per circondare banchi di pesci pelagici concentrati in superficie. Poco selettive ma molto efficaci. Tecnologia principale per sardine, acciughe, sgombri."},
+      {n:29,type:"mc",q:"La 'Piccola pesca locale' si effettua entro:",opts:["6-12 miglia dalla costa con imbarcazioni max 30 t.s.l.","20 miglia dalla costa con imbarcazioni max 50 t.s.l.","40 miglia dalla costa","Senza limiti di distanza con navi di I categoria"],correct:0,exp:"Piccola pesca locale: tra 6 e 12 miglia dalla costa, imbarcazioni max 30 t.s.l. Pesca ravvicinata: fino a 40 miglia, navi di almeno III categoria. Pesca mediterranea d'altura: senza limite di distanza, II categoria minima."},
+      {n:30,type:"mc",q:"Il Rapido (rete a sfogliare) è particolarmente distruttivo per il fondale perché:",opts:["Produce rumore subacqueo che disturba i cetacei","Aderisce al fondo sollevando sabbia e fango, danneggiando fondale e pesci; è molto poco selettivo","Cattura prevalentemente specie protette come la sogliola","Genera plastica fantasma abbandonata in mare"],correct:1,exp:"Il Rapido (rete a sfogliare) aderisce al fondo trascinandosi sulla sabbia, solleva fango e cattura soprattutto sogliole, platesse e merluzzi. I danni al fondale e agli organismi bentonici sono ingenti. Tecnica molto poco selettiva."},
+    ]
+  },
+  {
+    title:"IUCN, Conservazione e Normativa",
+    subtitle:"Sezione 4 — Categorie di rischio, stato delle specie, leggi",
+    qs:[
+      {n:31,type:"mc",q:"Nella classificazione IUCN, quale categoria si applica a una specie per cui si ha la certezza che l'ultimo individuo sia deceduto?",opts:["CR — In Pericolo Critico","EW — Estinto in Ambiente Selvatico","RE — Estinta nella Regione","EX — Estinto"],correct:3,exp:"EX = Extinct (Estinto): certezza assoluta che l'ultimo individuo sia deceduto. EW = Extinct in the Wild (sopravvivono solo individui in cattività). CR = Critically Endangered. RE = Regionally Extinct (estinto nella regione ma presente altrove)."},
+      {n:32,type:"mc",q:"La Cernia bruna (Epinephelus guaza) è classificata dall'IUCN come:",opts:["Minor Preoccupazione (LC)","Quasi Minacciata (NT)","In Pericolo (EN) — sia per le popolazioni italiane che per il Mediterraneo","Vulnerabile (VU)"],correct:2,exp:"Cernia bruna (Epinephelus guaza): IN PERICOLO (EN) sia per le popolazioni italiane che per l'intero Mediterraneo. La taglia minima è 45 cm. Nelle aree marine protette è in condizioni ottimali."},
+      {n:33,type:"vf",q:"Lo Storione (Acipenser sturio) è attualmente estinto in Italia allo stato selvatico.",correct:true,exp:"Lo Storione (Acipenser sturio) è estinto allo stato selvatico in Italia da almeno 30 anni. In Europa sopravvive una sola popolazione nel Garonna (Francia). La pesca è vietata. Gli esemplari presenti in Italia provengono da itticolture."},
+      {n:34,type:"mc",q:"Quale specie è classificata IUCN come 'VULNERABILE (VU)' specificamente per le popolazioni italiane?",opts:["Dentice (Dentex dentex) — LC per le popolazioni italiane","Sgombro (Scomber scombrus) — VU per le popolazioni italiane, LC per il resto del Mediterraneo","Palamita (Sarda sarda) — LC per tutte le popolazioni","Rana pescatrice (Lophius piscatorius) — LC per tutte le popolazioni"],correct:1,exp:"Sgombro (Scomber scombrus): VULNERABILE (VU) per le popolazioni italiane, MINOR PREOCCUPAZIONE (LC) per il resto del Mediterraneo. Questa discrepanza riflette la maggiore pressione di pesca sulle popolazioni italiane."},
+      {n:35,type:"vf",q:"La Trota marmorata (Salmo trutta marmoratus) è classificata IUCN come 'IN PERICOLO CRITICO (CR)'.",correct:true,exp:"Trota marmorata: IN PERICOLO CRITICO (CR). Cause principali: sbarramenti invalicabili nei fiumi, predazione da Silurus glanis (alieno invasivo), artificializzazione dei corsi d'acqua, ibridazione con Salmo trutta fario."},
+      {n:36,type:"mc",q:"Grazie al Piano di ricostituzione del tonno rosso, la specie Thunnus thynnus:",opts:["È stata dichiarata estinta nel Mediterraneo orientale","Ha mostrato un notevole aumento negli ultimi anni, pur restando soggetta a rigida regolamentazione","È stata rimossa dalla lista delle specie minacciate","Viene allevata esclusivamente in acquacoltura dal 2009"],correct:1,exp:"Il Piano di ricostituzione del tonno rosso (Reg. CE 302/2009) ha portato a un notevole aumento della specie negli ultimi anni. Tuttavia la regolamentazione resta molto stringente: periodi di fermo variabili per tecnica, taglia minima 30 kg o 115 cm."},
+      {n:37,type:"mc",q:"L'Anguilla europea (Anguilla anguilla) è classificata IUCN come:",opts:["Minor Preoccupazione (LC)","Quasi Minacciata (NT)","Vulnerabile (VU)","In Pericolo Critico (CR)"],correct:3,exp:"Anguilla europea: IN PERICOLO CRITICO (CR). Cause: inquinamento, eccessiva pressione di pesca (adulti e céche per ripopolamento), sbarramenti artificiali. La vallicoltura in Italia sta parzialmente migliorando lo status."},
+      {n:38,type:"mc",q:"La Legge 157 del 1992 disciplina:",opts:["Le norme sull'acquacoltura e l'itticoltura nazionale","La protezione della fauna selvatica omeoterma e il prelievo venatorio","Le zone di pesca FAO e le taglie minime dei pesci","Il commercio dei prodotti ittici e la tracciabilità delle filiere"],correct:1,exp:"Legge 157/1992 'Norme per la protezione della fauna selvatica omeoterma e per il prelievo venatorio': disciplina specie cacciabili, periodi, metodi, divieti e commercializzazione della fauna selvatica — NON riguarda la pesca professionale."},
+      {n:39,type:"mc",q:"Secondo la Legge 157/1992 (art. 21), un ristoratore può acquistare direttamente da un cacciatore formato al massimo:",opts:["Un capo intero di selvaggina grossa e 500 capi di piccola selvaggina per cacciatore per anno","Quantità illimitate purché con Mod. 1","Solo selvaggina di allevamento","Massimo 5 capi di selvaggina grossa all'anno"],correct:0,exp:"Cessione diretta consentita per: 1 capo intero di selvaggina grossa + max 500 capi di piccola selvaggina, per cacciatore per anno, a consumatore finale o esercizi al dettaglio/somministrazione — con documentazione obbligatoria."},
+      {n:40,type:"mc",q:"Per il cinghiale ceduto al ristoratore dal cacciatore, il documento obbligatorio riguarda:",opts:["Solo la fattura di vendita con IVA","Il Mod. 1 (dichiarazione di provenienza) e la documentazione di negatività per Trichinella","La bollatura sanitaria veterinaria prima della cessione","Il porto d'armi del cacciatore e l'autorizzazione comunale"],correct:1,exp:"Per il cinghiale il ristoratore deve acquisire e conservare: Mod. 1 (dichiarazione di provenienza e tracciabilità) + documentazione di negatività trichinoscopica (Trichinella = parassita pericoloso per l'uomo nelle carni di cinghiale). Il Mod. 1 da solo non basta per questa specie."},
+    ]
+  },
+  {
+    title:"Ovini, Caprini e Selvaggina",
+    subtitle:"Sezione 5 — Razze, classificazione anagrafica e normativa venatoria",
+    qs:[
+      {n:41,type:"mc",q:"Quale classificazione anagrafica descrive correttamente l'Abbacchio?",opts:["Agnello maschio abbattuto entro il 10° mese","Ovino (maschi e femmine) abbattuto tra 28 e 40 giorni di vita","Femmina dopo il primo parto, abbattuta tra il 6° e 7° mese","Maschio castrato entro lo svezzamento e abbattuto tra 8 e 10 mesi"],correct:1,exp:"Abbacchio = ovino (maschio o femmina) abbattuto tra 28 e 40 giorni. L'Abbacchio Romano IGP (dal 2009) richiede razze specifiche: Sarda, Comisana, Sopravissana, Merinizzata italiana e loro incroci."},
+      {n:42,type:"mc",q:"La razza ovina Sarda conta circa 3.000.000 di capi ed è a vocazione prevalentemente:",opts:["Da carne e lana (razze merinizzate)","Da latte (100-180 kg in 180-240 giorni)","Da sola lana","Da carne esclusivamente"],correct:1,exp:"La razza Sarda è prevalentemente da latte (100-180 kg in 180-240 giorni), con circa 3.000.000 di capi (di cui 200.000 controllati). Sistema estensivo e transumante nelle zone d'origine."},
+      {n:43,type:"mc",q:"La razza ovina Merino è originaria di:",opts:["Sardegna","Inghilterra (incroci Norfolk-Southdown)","Spagna (Valle del Guadalquivir)","Francia (incroci Rambouillet-Leicester)"],correct:2,exp:"Merino: originaria della Valle del Guadalquivir in Spagna. Razza da lana e carne, diffusa in Europa, Australia, Argentina, Sud Africa. In Italia è alla base delle razze Merinizzate italiane."},
+      {n:44,type:"mc",q:"Il 'Castrato' (ovino) è definito come:",opts:["Femmina non ancora entrata in riproduzione","Maschio castrato entro lo svezzamento e abbattuto tra gli 8 e 10 mesi di vita","Agnello maschio abbattuto entro il 4° mese","Maschio riproduttore non castrato abbattuto tra i 3-6 mesi"],correct:1,exp:"Castrato: maschio castrato entro lo svezzamento, abbattuto tra gli 8 e i 10 mesi. Non va confuso con l'Agnello (entro il 10° mese, non castrato) né con il Montone (maschio riproduttore non castrato)."},
+      {n:45,type:"mc",q:"Nella razza caprina Camosciata delle Alpi, il vello è caratterizzato da:",opts:["Lana fine e bianca come la Saanen","Pelo lungo e multicolore come la Orobica","Pelo corto e fulvo con caratteristica riga mulina e maschera facciale scura","Colorazione rosso-brunastro uniforme"],correct:2,exp:"Camosciata delle Alpi: pelo corto e fulvo con caratteristica riga mulina (linea scura dorsale) e maschera facciale scura. Origine svizzera. Taglia medio-grande (maschi fino 100 kg). Diffusa su tutto l'arco alpino italiano."},
+      {n:46,type:"vf",q:"La pecora raggiunge la pubertà mediamente tra i 10-11 mesi di vita.",correct:true,exp:"Pubertà ovina a 10-11 mesi; accoppiamento quando la femmina pesa circa ¾ del peso adulto (35-50 kg). Gestazione ~150 giorni. Ciclo estrale ogni 19-21 giorni (si manifesta solo in presenza dei maschi — arieti o 'ruffiani')."},
+      {n:47,type:"vf",q:"Il cinghiale è l'unica specie di selvaggina da pelo per cui è richiesta la negatività per Trichinella.",correct:true,exp:"Il cinghiale (Sus scrofa) è specie sensibile a Trichinella spiralis (nematode che infesta i muscoli causando trichinosi nell'uomo). L'obbligo di documentare la negatività trichinoscopica riguarda solo il cinghiale tra la selvaggina da pelo."},
+      {n:48,type:"mc",q:"Quale sistema di allevamento ovi-caprino è il più diffuso nell'Italia centro-meridionale?",opts:["Sistema a grande transumanza con greggi di 1.000-3.000 capi","Sistema stanziale o fisso con greggi di 500-1.000 capi","Sistema stallino con unifeed e mungitura meccanica","Sistema a piccola transumanza alpina verticale"],correct:1,exp:"Sistema stanziale o fisso (500-1.000 capi) è il più diffuso nell'Italia centro-meridionale. La grande transumanza (1.000-3.000 capi) è anch'essa diffusa al Sud. La piccola transumanza verticale è tipica delle Alpi."},
+      {n:49,type:"mc",q:"Quale delle seguenti specie di selvaggina da pelo NON rientra nell'elenco commercializzabile (art. 21 L. 157/1992)?",opts:["Lepre comune (Lepus europaeus)","Capriolo (Capreolus capreolus)","Muflone della popolazione sarda","Cinghiale (Sus scrofa)"],correct:2,exp:"Il Muflone della POPOLAZIONE SARDA è escluso dall'elenco commercializzabile (art. 21 L. 157/92). Il muflone di altre aree italiane (introdotto) è invece commercializzabile. Distinzione sottile ma fondamentale dal punto di vista normativo."},
+      {n:50,type:"mc",q:"L'Agnello da latte è abbattuto:",opts:["Tra 28 e 40 giorni di vita","Entro il 4° mese di vita","Tra il 4° e il 10° mese di vita","Tra l'8° e il 10° mese di vita"],correct:1,exp:"Agnello da latte: abbattuto entro il 4° mese. Abbacchio: 28-40 giorni. Agnello (tout court): entro il 10° mese. Agnellone: dopo il 10° mese. Castrato: maschio castrato, abbattuto tra 8 e 10 mesi."},
+    ]
+  },
+  {
+    title:"Nomi dei Pesci, Molluschi e Crostacei",
+    subtitle:"Sezione 6 — Nome scientifico ↔ nome comune ↔ descrizione",
+    qs:[
+      {n:51,type:"mc",q:"Qual è il nome comune italiano di Thunnus thynnus?",opts:["Tonno bianco / Alalunga","Tonno rosso","Palamita","Tonnetto alletterato"],correct:1,exp:"Thunnus thynnus = Tonno rosso (Bluefin tuna / Thon rouge). Thunnus alalunga = Tonno bianco/Alalunga (pinne pettorali lunghissime). Nota critica: il tonno rosso è NT/EN per le popolazioni mediterranee."},
+      {n:52,type:"mc",q:"Qual è il nome comune italiano di Merluccius merluccius?",opts:["Merluzzo nordico","Nasello europeo","Gadus morhua","Luccio di mare"],correct:1,exp:"Merluccius merluccius = Nasello europeo. Spesso venduto anche come 'Merluzzo' — confusione commerciale diffusa. Il vero Merluzzo nordico è Gadus morhua (produce Stoccafisso essiccato all'aria e Baccalà salato)."},
+      {n:53,type:"mc",q:"Qual è il nome comune italiano di Seriola dumerili?",opts:["Pesce serra","Ricciola","Lampuga","Sugarello"],correct:1,exp:"Seriola dumerili = Ricciola. La più grande della famiglia Carangidae, raggiunge 2 m e 70-100 kg. Nome inglese: Amberjack / Yellow tail. Attenzione: non confondere con la Lampuga (Coryphaena hippurus)."},
+      {n:54,type:"mc",q:"Qual è il nome comune italiano di Solea solea?",opts:["Passera di mare / Platessa","Rombo chiodato","Sogliola comune","Rombo liscio"],correct:2,exp:"Solea solea = Sogliola comune. Occhi sul lato destro. Psetta maxima = Rombo chiodato (occhi a sinistra, tubercoli ossei). Scophthalmus rhombus = Rombo liscio (occhi a sinistra, senza chiodi). Pleuronectes platessa = Passera di mare."},
+      {n:55,type:"mc",q:"Qual è il nome comune italiano di Nephrops norvegicus?",opts:["Aragosta","Astice europeo","Cicala di mare","Scampo"],correct:3,exp:"Nephrops norvegicus = Scampo. Palinurus elephas = Aragosta (senza chele). Homarus gammarus = Astice europeo (con grandi chele). Scyllarus arctus = Cicala di mare / Magnosella (antenne a pale piatte)."},
+      {n:56,type:"mc",q:"Qual è il nome comune italiano di Maja squinado?",opts:["Granciporro","Grancevola","Granchio marino","Canocchia"],correct:1,exp:"Maja squinado = Grancevola / Granzevola. Il nome veneziano 'Granséola' deriva da 'granso' (granchio) + 'séola' (cipolla). Cancer pagurus = Granciporro. Carcinus spp. = Granchio marino. Squilla mantis = Canocchia."},
+      {n:57,type:"mc",q:"Qual è il nome comune italiano di Palinurus elephas?",opts:["Astice europeo","Scampo","Aragosta","Cicala di mare"],correct:2,exp:"Palinurus elephas = Aragosta. Palinuro: privo di chele (a differenza dell'Astice). Vive su fondali rocciosi a 20-70 m, soprattutto attorno alla Sardegna. Stagione di pesca: febbraio-agosto nel Mediterraneo."},
+      {n:58,type:"mc",q:"Qual è il nome comune italiano di Pecten jacobaeus?",opts:["Fasolare","Cappasanta / Conchiglia di San Giacomo","Cannolicchio","Ostrica piatta"],correct:1,exp:"Pecten jacobaeus = Cappasanta / Conchiglia di San Giacomo (Coquille Saint-Jacques in francese). Bivalve ermafrodita: valva convessa biancastra + valva piatta rosata. Diametro fino a 15 cm. Simbolo del pellegrinaggio di Santiago."},
+      {n:59,type:"mc",q:"Qual è il nome scientifico dell'Acciuga / Alice?",opts:["Sardina pilchardus","Sprattus sprattus","Engraulis encrasicholus","Sardinella aurita"],correct:2,exp:"Engraulis encrasicholus = Acciuga / Alice. Sardina pilchardus = Sardina. Sprattus sprattus = Spratto / Papalina. Sardinella aurita = Alaccia. Tutte specie del pesce azzurro — fondamentale saperle distinguere per l'etichettatura."},
+      {n:60,type:"mc",q:"Qual è il nome scientifico del Pesce spada?",opts:["Thunnus thynnus","Xiphias gladius","Euthynnus alletteratus","Sarda sarda"],correct:1,exp:"Xiphias gladius = Pesce spada. Unica specie della famiglia Xiphiidae. La 'spada' è la mascella superiore appiattita, lunga circa 1/3 del corpo. Può superare 4,5 m e 400 kg. Classificato NT (IUCN) per il Mediterraneo."},
+      {n:61,type:"mc",q:"Qual è il nome scientifico del Branzino / Spigola?",opts:["Sparus aurata","Dentex dentex","Dicentrarchus labrax","Lithognathus mormyrus"],correct:2,exp:"Dicentrarchus labrax = Branzino/Spigola. Famiglia MORONIDAE — non Sparidae! Errore frequente. 'Branzino' deriverebbe da 'branchie in vista'; 'spigola' da 'spiga' per i raggi spinosi dorsali. Altamente eurialino, allevato in acquacoltura."},
+      {n:62,type:"mc",q:"Qual è il nome scientifico dell'Anguilla europea?",opts:["Salmo salar","Anguilla anguilla","Esox lucius","Oncorhynchus mykiss"],correct:1,exp:"Anguilla anguilla = Anguilla europea. Catadroma: nasce nel Mar dei Sargassi, le céche risalgono i fiumi europei per crescere 10-12 anni in acqua dolce, poi tornano al mare come anguille argentee. IN PERICOLO CRITICO (CR)."},
+      {n:63,type:"mc",q:"Qual è il nome scientifico della Cozza comune del Mediterraneo?",opts:["Mytilus edulis","Modiolus barbatus","Mytilus galloprovincialis","Venerupis decussatus"],correct:2,exp:"Mytilus galloprovincialis = Cozza del Mediterraneo (autoctona). Mytilus edulis = Cozza del Nord Atlantico. Modiolus barbatus = Cozza pelosa (Puglia). Non confondere con Venerupis decussatus = Vongola verace."},
+      {n:64,type:"mc",q:"Qual è il nome scientifico della Rana pescatrice?",opts:["Scorpaena scrofa","Uranoscopus scaber","Lophius piscatorius","Zeus faber"],correct:2,exp:"Lophius piscatorius = Rana pescatrice / Coda di rospo. Il primo raggio dorsale è l'illicio (organo-esca con escrescenza carnosa). Scorpaena scrofa = Scorfano rosso. Zeus faber = Pesce San Pietro. Uranoscopus scaber = Pesce prete."},
+      {n:65,type:"mc",q:"'Pesce osseo, unica specie vivente della famiglia Pomatomidae, dentatura triangolare potentissima, macchia nera alla base della pinna pettorale, corpo fusiforme slanciato.' Di quale specie si tratta?",opts:["Pesce sciabola (Lepidopus caudatus)","Pesce serra (Pomatomus saltatrix)","Pesce prete (Uranoscopus scaber)","Tracina drago (Trachinus draco)"],correct:1,exp:"Pomatomus saltatrix = Pesce serra. UNICO rappresentante vivente della famiglia Pomatomidae. Dentatura così potente da rendere la pesca con palangari difficoltosa. Diffuso soprattutto lungo le coste campane, calabresi e siciliane. In inglese: Bluefish."},
+      {n:66,type:"mc",q:"'Mascella superiore sviluppata in una struttura appiattita e tagliente lunga circa 1/3 del corpo; può superare i 4,5 m e 400 kg; unica specie della famiglia Xiphiidae.' Di quale specie si tratta?",opts:["Tonno rosso (Thunnus thynnus)","Alalunga (Thunnus alalunga)","Pesce spada (Xiphias gladius)","Palamita (Sarda sarda)"],correct:2,exp:"Xiphias gladius = Pesce spada. La 'spada' è la mascella superiore, appiattita e tagliente, lunga circa 1/3 del corpo. Anche la mandibola è allungata e appuntita ma più corta. Niente pinne ventrali; niente scaglie negli adulti."},
+      {n:67,type:"mc",q:"'Unico membro mediterraneo della sua famiglia, testa piatta con occhi, narici e bocca rivolti verso l'alto, appendice vermiforme sulla mandibola come esca, spina opercolare velenifera.' Di quale specie si tratta?",opts:["Scorfano rosso (Scorpaena scrofa)","Gallinella (Chelidonichthys obscurus)","Pesce prete (Uranoscopus scaber)","Tracina drago (Trachinus draco)"],correct:2,exp:"Uranoscopus scaber = Pesce prete. Unico membro mediterraneo della famiglia Uranoscopidae. Corpo bianco sul ventre e brunastro sul dorso. Habitat: fondali mobili sabbiosi o fangosi tra 15 e 100 m. Pesca: estate-inverno."},
+      {n:68,type:"mc",q:"'Pesce piatto con entrambi gli occhi sul lato sinistro, molto simile al Rombo chiodato ma privo di tubercoli ossei («chiodi»); primi raggi dorsali liberi e non connessi da membrana.' Di quale specie si tratta?",opts:["Sogliola comune (Solea solea)","Passera di mare (Pleuronectes platessa)","Rombo chiodato (Psetta maxima)","Rombo liscio (Scophthalmus rhombus)"],correct:3,exp:"Scophthalmus rhombus = Rombo liscio. Occhi sul lato sinistro, come il Rombo chiodato. Differenze chiave: nessun tubercolo osseo ('chiodo') e primi raggi dorsali liberi (non connessi da membrana). Forma meno romboidale del Rombo chiodato."},
+      {n:69,type:"mc",q:"Il nome dialettale veneziano 'Peocio' o 'Pedocio' si riferisce a quale specie?",opts:["Vongola verace (Venerupis decussatus)","Cozza (Mytilus galloprovincialis)","Cappasanta (Pecten jacobaeus)","Cannolicchio (Solen marginatus)"],correct:1,exp:"Peocio/Pedocio = Cozza (Mytilus galloprovincialis) in veneto/veneziano. Attenzione: in veneziano il granchio in muta si chiama 'Moeca'; la femmina con le uova è 'Masaneta'. Conoscere i nomi dialettali è fondamentale nei mercati ittici italiani."},
+      {n:70,type:"vf",q:"La 'Trota salmonata' è una specie di Salmonide distinta dalla Trota iridea, con carne naturalmente rossa.",correct:false,exp:"La Trota salmonata NON è una specie distinta. È la stessa Trota iridea (Oncorhynchus mykiss) di allevamento alimentata con mangimi contenenti carotenoidi o astaxantina da crostacei. Venderla come 'specie diversa' o 'selvatica' è frode."},
+      {n:71,type:"vf",q:"L'Anguilla europea è una specie catadroma: nasce in mare (Mar dei Sargassi) e trascorre la vita adulta in acqua dolce.",correct:true,exp:"L'Anguilla europea è CATADROMA: nasce nel Mar dei Sargassi (unico luogo di riproduzione conosciuto), le larve leptocefali attraversano l'Atlantico trasportate dalla corrente del Golfo (1-3 anni), risalgono i fiumi europei come céche/avannotti."},
+      {n:72,type:"vf",q:"Il Branzino / Spigola (Dicentrarchus labrax) appartiene alla famiglia Sparidae.",correct:false,exp:"Dicentrarchus labrax appartiene alla famiglia MORONIDAE, non Sparidae. La famiglia Sparidae comprende: orata (Sparus aurata), dentice (Dentex dentex), pagelli, saraghi, mormore, occhiata, tanuta. Confusione pericolosa da evitare."},
+      {n:73,type:"vf",q:"Per decreto ministeriale italiano, 'Baccalà' è la denominazione riservata esclusivamente al Gadus macrocephalus salato e stagionato.",correct:false,exp:"Per decreto ministeriale italiano: 'Baccalà' = denominazione riservata al solo Gadus MACROCEPHALUS (salato e stagionato). 'Stoccafisso' = Gadus morhua essiccato all'aria. Eccezione storica: in Veneto lo stoccafisso si chiama tradizionalmente 'Bacalà'."},
+      {n:74,type:"mc",q:"'Crostaceo simile all'aragosta ma con corpo tozzo e appiattito dorso-ventralmente, antenne a forma di pale piatte e segmentate, privo di chele tranne il 5° paio nelle femmine per portare le uova.' Quale specie?",opts:["Aragosta (Palinurus elephas)","Canocchia (Squilla mantis)","Cicala di mare / Magnosella (Scyllarus arctus)","Granchio marino (Carcinus aestuarii)"],correct:2,exp:"Scyllarus arctus = Cicala di mare / Magnosella. Antenne a pale piatte segmentate (non filiformi). Corpo appiattito dorso-ventralmente. Privo di chele tranne il 5° paio nelle femmine (per le uova). La Magnosa (Scyllarides latus) è protetta in tutto il Mediterraneo."},
+      {n:75,type:"mc",q:"'Bivalve con conchiglia robusta e spessa, piede a forma di lingua rossastro, sifoni corti e scuri fusi insieme, tipicamente tra le mattes di Posidonia oceanica.' Quale specie?",opts:["Fasolare (Callista chione)","Tartufo di mare (Venus verrucosa)","Tellina (Donax trunculus)","Cannolicchio (Solen marginatus)"],correct:1,exp:"Venus verrucosa = Tartufo di mare. Conchiglia con lamine e verruche, piede a lingua, sifoni corti e fusi, tipicamente tra le mattes di Posidonia. Non viene allevato. Si pesca con turbo soffianti (poco sostenibile)."},
+    ]
+  },
+
+  // ADVANCED
+  {
+    title:"Analisi Critica e Ragionamento Professionale",
+    subtitle:"Sezione 7 (Avanzato) — Scenari reali e responsabilità professionale",
+    advanced:true,
+    sectionBreak:true,
+    qs:[
+      {n:76,type:"mc",q:"Un ristorante vuole servire pesce spada tutto l'anno. Il fornitore propone prodotto surgelato da zone FAO extra-Mediterraneo senza indicazione di provenienza. Qual è la risposta professionale?",opts:["Accettare purché il prodotto sia surgelato e confezionato","Rifiutare: ogni prodotto ittico (fresco o surgelato) deve riportare la zona FAO; la taglia minima va sempre verificata; la stagionalità biologica deve guidare le scelte di menu","Accettare se il prezzo è conveniente","Accettare se il fornitore garantisce verbalmente la legalità"],correct:1,exp:"La normativa UE impone su ogni prodotto ittico (fresco o surgelato) l'indicazione della zona FAO. Un fornitore che non indica la provenienza viola le norme sull'etichettatura. Inoltre, le taglie minime (pesce spada: 140 cm nel mare territoriale o 125 cm / 25 kg in Atlantico) vanno sempre verificate sulla documentazione di acquisto."},
+      {n:77,type:"mc",q:"La 'Trota salmonata' non è una specie diversa dalla trota iridea. Perché questa informazione è eticamente e legalmente rilevante per uno chef?",opts:["Non è rilevante: il cliente cerca solo un prodotto gustoso","Vendere la trota salmonata come specie diversa o come prodotto selvatico costituisce frode alimentare; lo chef deve comunicare correttamente al cliente che è un prodotto di allevamento ottenuto con mangimi a base di carotenoidi/astaxantina","È rilevante solo dal punto di vista nutrizionale","È rilevante solo durante i controlli delle autorità sanitarie"],correct:1,exp:"Vendere la trota salmonata come 'specie diversa' o come prodotto selvatico costituisce frode alimentare. Lo chef ha responsabilità nella comunicazione al cliente: è un prodotto di allevamento ottenuto con specifici mangimi (carotenoidi/astaxantina). La trasparenza è un obbligo etico e legale."},
+      {n:78,type:"mc",q:"Come si distingue immediatamente sul posto la Vongola verace autoctona (Venerupis decussatus) dalla filippina (Tapes philippinarum)?",opts:["Colore: bianca = autoctona, grigia = filippina","I sifoni: separati nell'autoctona, uniti alla base nella filippina — differenza morfologica chiara e immediata","Dimensioni: autoctona sempre > 5 cm, filippina sempre < 3 cm","Peso: la filippina è sempre più leggera"],correct:1,exp:"Metodo morfologico più rapido e affidabile per la distinzione sul posto: i sifoni. Separati e distinti nell'autoctona (Venerupis decussatus); uniti alla base nella filippina (Tapes philippinarum). Nessuno strumento necessario — solo occhio allenato."},
+      {n:79,type:"mc",q:"Perché la tecnica delle draghe turbosoffianti è particolarmente controversa ambientalmente?",opts:["Produce molto rumore subacqueo disturbando i mammiferi marini","Penetra nel substrato e strappa gli organismi dalla sabbia, distruggendo l'habitat bentonico e le praterie di Posidonia — non solo la specie target","Cattura quantità eccessive di pesci pelagici come sardine","Richiede imbarcazioni molto grandi con alto consumo di carburante"],correct:1,exp:"Le draghe penetrano fisicamente nel substrato sabbioso e distruggono le praterie di Posidonia oceanica (habitat protetto, nursery essenziale per molte specie), annientando tutti gli organismi bentonici — non solo il mollusco target. Tra le tecniche più impattanti a livello ambientale."},
+      {n:80,type:"mc",q:"Un cacciatore porta un capriolo al tuo ristorante. Quali sono TUTTI gli obblighi del ristoratore?",opts:["Solo verificare che il capriolo pesi abbastanza e conservare la ricevuta","Acquisire e conservare il Mod. 1 (tracciabilità); per il capriolo non è richiesta l'analisi Trichinella (richiesta solo per il cinghiale); garantire la tracciabilità al consumatore finale","Inviarlo obbligatoriamente a un centro di lavorazione e bollatura sanitaria, senza eccezioni","Accettarlo solo se il cacciatore ha la licenza di pesca"],correct:1,exp:"Per il capriolo: Mod. 1 obbligatorio. L'analisi Trichinella è richiesta SOLO per il cinghiale (e per orso, volpe — specie sensibili). Il ristoratore diventa responsabile della garanzia di sicurezza alimentare al consumatore finale non appena acquista il prodotto."},
+      {n:81,type:"mc",q:"La tradizione veneziana delle 'moeche' sfrutta quale fenomeno biologico e perché ha valore gastronomico elevato?",opts:["La riproduzione primaverile: si commercializzano le femmine gravide","La muta (cambio dell'esoscheletro): nel brevissimo periodo in cui il tegumento è ancora morbido, il granchio si consuma intero, guscio compreso — caratteristiche organolettiche uniche e stagionalità estrema","La migrazione invernale verso acque profonde: i granchi accumulano grasso","L'alimentazione autunnale a base di Posidonia che conferisce sapore speciale"],correct:1,exp:"La 'moeca' veneziana sfrutta la muta (cambio dell'esoscheletro chitinoso) del Carcinus aestuarii/maenas. Nel brevissimo periodo in cui il nuovo tegumento è ancora morbido (pochi giorni), il granchio si può consumare intero, guscio compreso. Sapore delicato e unico, stagionalità estrema, altissimo valore gastronomico."},
+      {n:82,type:"mc",q:"Il Luccio italico (Esox cisalpinus, IUCN EN) viene portato al tuo ristorante da un pescatore con regolare licenza. Sei d'accordo con il tuo collega che dice 'se è legale, si usa'?",opts:["Sì: se la pesca è legale, l'uso gastronomico è automaticamente giustificato","No: verificare le normative regionali (periodi di divieto variabili), acquistare solo da fonti certificate, comunicare al cliente la rarità, valutare alternative sostenibili — la legalità formale non esaurisce la responsabilità etica dello chef","Sì, purché si sostituisca con carpa in caso di indisponibilità","No: il Luccio italico è completamente vietato in tutta Italia senza eccezioni"],correct:1,exp:"La classificazione EN non vieta automaticamente la pesca (dipende dalle normative regionali, con periodi di divieto variabili regione per regione). Tuttavia lo chef ha una responsabilità etica che va oltre la legalità formale: verificare la fonte, comunicare al cliente, valutare alternative sostenibili."},
+      {n:83,type:"mc",q:"Lo sgombro (Scomber scombrus) è classificato VU per le popolazioni italiane ma LC per il resto del Mediterraneo. Cosa implica per la gestione del menu?",opts:["Nulla: se proviene da altri Paesi (LC) si può usare liberamente in qualsiasi quantità","Le popolazioni italiane sono sotto maggiore pressione; uno chef responsabile verifica la provenienza (zona FAO), rispetta la taglia minima (18 cm), favorisce la stagionalità e comunica al cliente","Il prodotto italiano è superiore qualitativamente e va sempre preferito indipendentemente dall'IUCN","La classificazione VU viene rimossa se si importa da Paesi con LC"],correct:1,exp:"La classificazione VU per le popolazioni italiane (vs LC per il resto del Mediterraneo) indica pressione di pesca maggiore sulle popolazioni locali. Responsabilità professionale: verificare la zona FAO di provenienza, rispettare la taglia minima (18 cm), privilegiare la stagionalità, educare il cliente."},
+    ]
+  },
+  {
+    title:"Schede Descrittive Approfondite: Pesci",
+    subtitle:"Sezione 8 (Avanzato) — Biologia, anatomia e comportamento",
+    advanced:true,
+    qs:[
+      {n:84,type:"mc",q:"Lo scheletro dell'Aguglia (Belone belone) è di colore verde-azzurro. Qual è la causa scientifica di questa colorazione?",opts:["Clorofilla derivata dall'alimentazione a base di alghe marine","Depositi di biliverdina, un prodotto del metabolismo della bile","Cromatofori distribuiti nell'osso durante la riproduzione","Ossido di rame assorbito dall'habitat in acque ricche di fitoplancton"],correct:1,exp:"L'Aguglia (Belone belone) ha lo scheletro di colore verde-azzurro a causa di depositi di biliverdina, un prodotto del metabolismo della bile. Curiosità biologica unica tra i pesci mediterranei comuni — utile aneddoto per sorprendere i clienti al tavolo."},
+      {n:85,type:"mc",q:"Il Suro / Sugarello (Trachurus trachurus) è riconoscibile per una caratteristica anatomica sulla linea laterale che nessun'altra specie mediterranea comune condivide. Quale?",opts:["Una doppia linea laterale luminescente che brilla di notte","Una linea irregolare di scudetti ossei spinosi lungo i fianchi","L'assenza totale di linea laterale, come nei Clupeidae","Organi elettrorecettori lungo la linea laterale, come nei Condroitti"],correct:1,exp:"Il Suro / Sugarello (Trachurus trachurus) ha una linea irregolare di scudetti ossei spinosi lungo i fianchi — struttura unica che lo rende inconfondibile all'ispezione manuale. Carattere diagnostico immediato anche senza etichetta."},
+      {n:86,type:"mc",q:"Il Cefalo / Muggine (Mugil cephalus) è definito 'eurialino'. Cosa significa questo termine e quale implicazione gastronomica importante ha per la femmina?",opts:["Vive esclusivamente in acque salate a salinità costante — limita le zone di pesca","Tollera ampie variazioni di salinità (marino, salmastro, dolce); le femmine catturate in prossimità della riproduzione producono la preziosa bottarga — motivo per cui sono preferite in quel periodo specifico","Ha carni particolarmente salate per accumulo di cloruro di sodio nei muscoli","Migra annualmente tra acque dolci e marine per motivi riproduttivi come il salmone"],correct:1,exp:"Eurialino = tollerante ad ampie variazioni di salinità: il cefalo si pesca in mare aperto, nelle lagune, nelle foci dei fiumi e persino in acque quasi dolci. Le femmine in prossimità della riproduzione producono la bottarga (uova essiccate e stagionate) — una delle preparazioni più pregiate della gastronomia italiana."},
+      {n:87,type:"mc",q:"Un cuoco deve distinguere la Triglia di scoglio (Mullus surmuletus) dalla Triglia di fango (Mullus barbatus) quando arrivano entrambe in cucina senza etichetta. Qual è il metodo morfologico più affidabile?",opts:["Il numero di barbigli: solo la triglia di scoglio li ha, la triglia di fango no","La presenza di una macchia nera sulla prima pinna dorsale — unica nella triglia di fango","Il profilo della testa: allungato con prima pinna dorsale con bande marroni-gialle nella Triglia di scoglio; testa tozza e grossa con corpo interamente ricoperto di spesse squame rosa-argento nella Triglia di fango","Le due specie sono identiche morfologicamente e si distinguono solo per l'habitat di cattura"],correct:2,exp:"Triglia di scoglio: testa con profilo allungato, prima pinna dorsale con bande marroni e gialle, habitat su fondali rocciosi. Triglia di fango: testa grossa e tozza, corpo interamente ricoperto di spesse squame rosa-argento, habitat su fondali sabbiosi/melmosi. Entrambe hanno 2 barbigli tattili — non è il criterio discriminante."},
+      {n:88,type:"mc",q:"Sia la Tracina drago (Trachinus draco) che lo Scorfano rosso (Scorpaena scrofa) hanno spine velenifere. Dove si trovano rispettivamente e quale comportamento predispone di più i bagnanti al contatto con la Tracina?",opts:["Entrambe solo sulla pinna dorsale; lo Scorfano è più pericoloso per la colorazione mimetica","Tracina: spine della prima pinna dorsale e opercolo (pericolosissime per chi calpesta fondali sabbiosi costieri dove si infossa). Scorfano: raggi spinosi della pinna dorsale e opercolo. La Tracina è generalmente più pericolosa per la frequentazione di bassifondi sabbiosi vicino alle spiagge","Solo la Tracina è velenifera; lo Scorfano ha spine irritanti ma non tossiche","Entrambe causano shock anafilattico immediato e sono ugualmente letali"],correct:1,exp:"Tracina drago: spine della prima pinna dorsale (5-6 raggi) e spine opercolari — veleno potente e comune causa di incidenti balneari perché si infossa nei fondali sabbiosi costieri. Scorfano rosso: raggi spinosi dorsali e opercolo branchiale — ghiandole velenifere collegate. La Tracina è la più pericolosa per i bagnanti."},
+      {n:89,type:"mc",q:"Il Pagello fragolino (Pagellus erythrinus) è 'ermafrodita proterogino', il Pagello bastardo (Pagellus acarne) è 'ermafrodita proterandro'. Quale delle seguenti definizioni è corretta?",opts:["Proterogino: nasce maschio e diventa femmina con l'età; proterandro: nasce femmina e diventa maschio","Proterogino: nasce femmina e diventa maschio con l'età; proterandro: nasce maschio e diventa femmina con l'età — i soggetti grandi di entrambe le specie hanno quindi sessi diversi","Entrambi i termini indicano la stessa cosa: cambio di sesso una volta sola","Proterogino: cambio di sesso reversibile; proterandro: cambio di sesso irreversibile"],correct:1,exp:"PROTEROGINO: nasce FEMMINA → diventa MASCHIO con l'età (Pagello fragolino, Cernia, Orata). I soggetti grandi sono maschi. PROTERANDRO: nasce MASCHIO → diventa FEMMINA con l'età (Pagello bastardo, Mormora, Tanuta). I soggetti grandi sono femmine. Conoscere questo fenomeno è fondamentale per rispettare la stagionalità riproduttiva."},
+      {n:90,type:"mc",q:"La Razza chiodata (Raja clavata) è un Condroitto. Quale caratteristica morfologica esterna la distingue immediatamente sia dai pesci piatti ossei che dagli altri Condroitti?",opts:["Ha entrambi gli occhi sul lato sinistro del corpo come i Rombi","Corpo romboidale appiattito, numerosi tubercoli/spine («chiodi») sul dorso, spiracolo dietro l'occhio, fessure branchiali ventrali senza opercolo — caratteri tipici dei Rajidae cartilaginei","Scaglie cicloidi molto grandi e visibili; bocca terminale","Pinna caudale simmetrica (eterocer) e pinna dorsale unica"],correct:1,exp:"Raja clavata: corpo romboidale appiattito (non con occhi spostati come nei pesci ossei piatti), numerosi tubercoli/spine sul dorso (i 'chiodi' che danno il nome), spiracolo (organo respiratorio accessorio) visibile dietro l'occhio, fessure branchiali sul lato ventrale senza opercolo — tutti caratteri tipici dei Condroitti Rajidae."},
+      {n:91,type:"mc",q:"Il Persico reale (Perca fluviatilis) viene pescato nel Lago Maggiore con una tecnica tradizionale chiamata 'legnaia'. Cosa si fa esattamente e quale principio biologico sfrutta?",opts:["Si calano reti a maglia fine lungo le rive rocciose per intrappolare i pesci in migrazione","Si preparano fascine di legno (preferibilmente quercia) zavorrate sul fondale: prima fungono da nursery per gli avannotti, poi diventano zona di aggregazione e pesca degli adulti — sfruttando le abitudini sedentarie e la ricerca di rifugio della specie","Si usano lenze con esche di legno dipinte per imitare insetti in superficie","Si costruiscono trappole di canne alle foci dei fiumi dove il persico risale in primavera"],correct:1,exp:"La 'legnaia' sfrutta l'etologia del Persico reale: specie sedentaria che cerca rifugio in strutture complesse. Le fascine di quercia sul fondale funzionano prima come nursery (gli avannotti trovano riparo e cibo), poi come punto di aggregazione degli adulti. Tecnica tradizionale del Lago Maggiore, in uso dal primo '900."},
+      {n:92,type:"mc",q:"La Lucioperca / Sandra (Sander lucioperca) è classificata IUCN come 'CARENTE DI DATI (DD)'. Perché questa classificazione è paradossalmente preoccupante per la biodiversità italiana?",opts:["DD significa che la specie è abbondante ma i dati non sono stati raccolti sistematicamente","DD significa che non esistono dati sulla consistenza e il trend delle popolazioni; eppure l'introduzione di questo forte predatore alloctono ha già causato estinzioni locali di specie endemiche — non si sa quanto stia peggiorando la situazione","DD è equivalente a LC: la specie è comune","DD indica che la specie è così rara che non si trovano campioni nei fiumi"],correct:1,exp:"DD (Data Deficient / Carente di Dati) non significa 'abbondante' ma 'non sappiamo'. Il paradosso: la Lucioperca è un predatore alloctono che ha già causato estinzioni locali documentate di specie native; eppure non esistono dati sistematici sul trend delle popolazioni nelle acque italiane."},
+      {n:93,type:"mc",q:"La Carpa comune (Cyprinus carpio) è classificata IUCN come 'NON APPLICABILE (NA)'. Perché questa categoria specifica?",opts:["La Carpa è così diffusa globalmente che la valutazione non si applica","Essendo di certa introduzione (probabilmente dai Romani) in quasi tutte le acque dolci europee, la valutazione dello stato di conservazione di una specie 'nativa' non si applica — è una specie invasiva, non autoctona","NA indica che la specie è protetta dalla Convenzione di Washington e non può essere classificata con i criteri IUCN standard","NA indica gestione commerciale esclusiva fuori dai criteri ecologici IUCN"],correct:1,exp:"NA (Not Applicable / Non Applicabile): la Carpa comune è di origine centro-europea, introdotta in Italia probabilmente dai Romani per l'allevamento (piscicoltura). Essendo di certa introduzione (specie aliena naturalizzata), la valutazione dello stato di conservazione di una specie 'nativa' non si applica."},
+      {n:94,type:"mc",q:"L'Agone / Alosa (Alosa agone) si è probabilmente originata da esemplari anadromi rimasti intrappolati nei laghi prealpini. Quale combinazione è corretta per i tre termini 'lacustre', 'anadroma' e 'catadroma'?",opts:["Lacustre: vive sempre in lago; catadroma: nasce in mare, vive in dolce; anadroma: nasce in dolce, vive in mare","Lacustre: vive sempre in lago; anadroma: nasce in acque dolci e migra in mare (come il salmone); catadroma: vive in acque dolci/salmastre e si riproduce in mare aperto (come l'anguilla)","Catadroma e anadroma sono sinonimi; lacustre indica solo l'habitat senza implicazioni migratorie","Anadroma: vive in lago; catadroma: migra verso il basso dei fiumi; lacustre: rimane sempre in superficie"],correct:1,exp:"ANADROMA: nasce in acqua dolce → vive e cresce in mare → torna in acqua dolce per riprodursi (es. Salmone dell'Atlantico, Salmo salar). CATADROMA: nasce in mare (o acque profonde) → vive in acqua dolce/salmastra → torna al mare per riprodursi (es. Anguilla europea). LACUSTRE: vive permanentemente in lago senza migrazioni marine (es. Agone)."},
+      {n:95,type:"mc",q:"Il Lavarello / Coregone (Coregonus lavaretus) ha una caratteristica anatomica talmente distintiva da essere incorporata nel nome scientifico del genere. Quale?",opts:["La pinna adiposa particolarmente sviluppata, assente in tutti gli altri pesci d'acqua dolce","La forma della pupilla che termina con un angolo — 'Coregonus' significa letteralmente 'pupilla ad angolo' — carattere unico tra i pesci lacustri","Le scaglie particolarmente fitte che le conferiscono un riflesso argentato brillante","La doppia linea laterale, unica tra i Salmonidi"],correct:1,exp:"'Coregonus' deriva dal greco koré (pupilla) + gonia (angolo): la pupilla del Lavarello termina con un angolo caratteristico, inconfondibile. Ulteriore carattere distintivo: la pinna adiposa (come tutti i Salmonidi) e la testa piccola con muso corto. Classificato VULNERABILE (VU) per la sensibilità alla qualità dell'acqua."},
+      {n:96,type:"mc",q:"Il Salmerino alpino (Salvelinus alpinus) mostra un comportamento cromatico particolarmente spettacolare durante la riproduzione. Cosa succede e quali parti del corpo sono interessate nei maschi?",opts:["L'intero corpo diventa uniformemente argentato per attirare le femmine","I maschi assumono la 'livrea nuziale': zona ventrale, parte inferiore dei fianchi, pinne pari e anale assumono vivaci tonalità rosso-arancio — contrastando con il dorso blu metallico","I maschi perdono completamente le macchie sui fianchi e diventano uni-colore","Solo le pinne dorsali diventano rosse; il resto del corpo rimane invariato"],correct:1,exp:"Il Salmerino alpino durante la riproduzione mostra la 'livrea nuziale' nei maschi: la zona ventrale, la parte inferiore dei fianchi, le pinne pari (pettorali e ventrali) e quella anale assumono vivaci tonalità rosso-arancio vivo — contrasto spettacolare con il dorso blu metallico o verde-grigiastro. Utile per riconoscere il sesso in cucina."},
+      {n:97,type:"mc",q:"La Trota marmorata (Salmo trutta marmoratus) ha una distribuzione geografica estremamente ristretta in Italia. Quale combinazione di fattori ne mette a rischio la sopravvivenza?",opts:["La pesca eccessiva e il cambiamento climatico che riscalda le acque alpine","Sbarramenti invalicabili nei fiumi, predazione da Silurus glanis (specie aliena invasiva), artificializzazione dei corsi d'acqua e ibridazione con la Trota fario — perdita della genetica originale","Solo l'ibridazione con la Trota iridea di allevamento introdotta illegalmente","L'inquinamento agricolo dei fiumi alpini che riduce l'ossigeno disciolto"],correct:1,exp:"La Trota marmorata è presente esclusivamente nei bacini fluviali adriatici subalpini italiani e sloveni e nella fascia prealpina svizzera. Le cause del declino al CR: 1) sbarramenti invalicabili, 2) Silurus glanis (predatore alieno), 3) artificializzazione e alterazione dei livelli idrici, 4) ibridazione con Salmo trutta fario."},
+      {n:98,type:"mc",q:"L'Alborella (Alburnus alborella) è classificata IUCN come 'IN PERICOLO (EN)' ed è endemica di una specifica area geografica italiana. Quale?",opts:["Specie endemica dei laghi vulcanici del Lazio (Bolsena, Vico, Bracciano)","Specie endemica della Pianura Padana, di parte del versante adriatico dell'Italia centrale e di alcune zone della Costa Dalmata","Specie endemica esclusivamente del Po e dei grandi laghi subalpini lombardi","Specie endemica della Sardegna, introdotta poi nel continente"],correct:1,exp:"L'Alborella (Alburnus alborella) è endemica della Pianura Padana, di parte del versante adriatico dell'Italia centrale e di alcune zone della Costa Dalmata. Classificata IN PERICOLO (EN): è soggetta a predazione da molte specie e a eccessiva pressione di pesca. Piccole dimensioni (10-12 cm), gregaria di superficie."},
+    ]
+  },
+  {
+    title:"Schede Descrittive: Molluschi e Crostacei",
+    subtitle:"Sezione 9 (Avanzato) — Differenze tra specie, paradossi stagionali",
+    advanced:true,
+    qs:[
+      {n:99,type:"mc",q:"La Seppiola (Sepiola rondeleti) è spesso confusa con la Seppia comune in cucina. Quale combinazione di caratteristiche morfologiche le differenzia in modo definitivo?",opts:["La Seppiola ha corpo più grande, pinne che coprono tutta la sacca e osso interno più spesso","La Seppiola ha corpo tozzo e minuscolo (3-5 cm), due piccole pinne arrotondate dette 'orecchie' posizionate nella parte posteriore, e ASSENZA totale di conchiglia interna — a differenza della Seppia che ha l'osso","La Seppiola ha colorazione uniformemente bianca; la Seppia è sempre zebrata","La Seppiola è la versione giovane e immatura della Seppia comune"],correct:1,exp:"Seppiola (Sepiola rondeleti): corpo tozzo e molto piccolo (femmine mediamente 5 cm, maschi 3 cm), due piccole pinne arrotondate dette 'orecchie' posizionate nella parte posteriore arretrata della sacca, e totale ASSENZA di conchiglia interna (a differenza della Seppia che ha l'osso). La Seppiola è la sola specie dei Cefalopodi comuni in Italia completamente priva di struttura calcificata interna."},
+      {n:100,type:"mc",q:"Il Moscardino bianco (Eledone cirrosa) è spesso venduto insieme al Polpo comune. Come lo si distingue immediatamente senza ricorrere all'etichetta?",opts:["Il Moscardino ha 10 braccia; il Polpo comune ne ha 8","Il Polpo comune ha DUE file di ventose per braccio; il Moscardino bianco ha UNA sola fila di ventose — carattere diagnostico immediatamente visibile a occhio nudo","Il Moscardino è sempre più grande del Polpo comune","Il Moscardino ha colorazione blu vivo; il Polpo è sempre rossastro"],correct:1,exp:"Distinguerli è immediato: il Polpo comune (Octopus vulgaris) ha DUE file di ventose per braccio; il Moscardino bianco (Eledone cirrosa) ha UNA sola fila di ventose — carattere visibilissimo anche ad occhio nudo. La colorazione (grigio-bianca nel moscardino vs rosso-bruno nel polpo) e le dimensioni più ridotte del moscardino sono ulteriori indizi ma meno affidabili."},
+      {n:101,type:"mc",q:"L'Ostrica presenta un paradosso stagionale rispetto alla maggior parte dei molluschi bivalvi (cozze, vongole). In cosa consiste?",opts:["L'ostrica si riproduce in inverno (dicembre-febbraio) mentre le altre specie si riproducono in estate","L'ostrica si riproduce tra marzo e giugno (come le cozze) ma, al contrario di queste, il suo PICCO QUALITATIVO gastronomico corrisponde ai mesi freddi (ottobre-aprile) — quando è al di fuori del periodo riproduttivo — mentre le cozze sono migliori proprio durante la riproduzione","L'ostrica è la sola specie che migliora la qualità con le alte temperature estive","Non esiste alcun paradosso: ostrica e cozze hanno identica stagionalità qualitativa"],correct:1,exp:"Paradosso stagionale dell'ostrica: si riproduce tra marzo e giugno (come cozze e vongole) ma, al contrario di questi bivalvi (che sono migliori durante la riproduzione quando sono più grassi), l'ostrica in riproduzione è 'lattiginosa' e di qualità inferiore. Il picco qualitativo gastronomico è nei mesi freddi da ottobre ad aprile."},
+      {n:102,type:"mc",q:"Un fornitore propone 'Vongole veraci' a prezzo molto basso, mescolando Venerupis decussatus e Chamelea gallina. Come si distinguono morfologicamente e perché la confusione è problematica?",opts:["Non si distinguono: entrambe le specie hanno identico sapore e valore di mercato","La Chamelea gallina (Lupino/Vongola grigia) ha costolature concentriche, taglia max 4,5 cm e sifoni più lunghi proporzionalmente; la Venerupis decussatus ha striature reticolate e raggiunge i 6 cm. La confusione è problematica perché il Lupino ha valore commerciale inferiore e sapore meno intenso","Il Lupino è sempre di colore grigio uniforme; la Vongola verace sempre bianca — basta il colore","La Chamelea gallina ha due sifoni completamente separati; la Venerupis li ha fusi — identica distinzione alla vongola filippina"],correct:1,exp:"Chamelea gallina (Lupino/Vongola grigia): costolature concentriche evidenti, taglia massima 4,5 cm, colorazione bruno-biancastra/grigia con striature. Venerupis decussatus (Vongola verace autoctona): striature reticolate (incrocio tra coste longitudinali e concentriche), raggiunge i 6 cm. La confusione è commercialmente scorretta: il Lupino ha valore commerciale e organolettico inferiore."},
+      {n:103,type:"mc",q:"Il Gamberetto grigio (Crangon crangon) è oggetto di una tecnica di pesca tradizionale belga del tutto unica in Europa. Quale, e cosa la rende culturalmente e biologicamente interessante?",opts:["Si pesca con reti a mano in apnea di notte con torce impermeabili, sfruttando la fotottassia positiva","Si pesca con sciabica (seynevissen) trainata da cavalli da tiro lungo le spiagge atlantiche durante la bassa marea — una delle ultimissime pescagioni equestri d'Europa, che sfrutta la presenza di gamberetti in acque bassissime non raggiungibili da imbarcazioni","Si raccoglie manualmente a piedi durante la bassa marea con cestini di vimini, tecnica medievale","Si cattura con nasse olfattive profumate posizionate nei bassi fondali sabbiosi"],correct:1,exp:"La seynevissen belga è una delle rarissime pescagioni equestri ancora in attività in Europa: la sciabica è trascinata da cavalli da tiro lungo le spiagge atlantiche durante la bassa marea, in acque così basse (pochi decimetri) da non essere raggiungibili da imbarcazioni. Tradizione patrimonio culturale immateriale europeo."},
+      {n:104,type:"mc",q:"Il Granciporro (Cancer pagurus) è detto 'granciporro atlantico'. Quale coppia di caratteristiche morfologica + distribuzione lo identifica con certezza rispetto agli altri granchi presenti nei nostri mercati?",opts:["Colorazione uniformemente verde, diffuso in tutto il Mediterraneo","Chele molto grandi, robuste e con punte distintivamente NERE; vive soprattutto nell'Oceano Atlantico ed è raro nel Mediterraneo — la sua presenza al mercato italiano indica quasi sempre provenienza atlantica","Corpo a forma di cuore con tubercoli spinosi dorsali; presente sia in Atlantico che in Adriatico","Corpo appiattito con antenne a pale piatte; vive su fondali rocciosi a 5-50 m"],correct:1,exp:"Granciporro (Cancer pagurus): chele molto grandi, robuste e con punte NERE — carattere diagnostico immediatamente visibile. Distribuzione prevalentemente atlantica (dalla Norvegia alle coste irlandesi, britanniche, francesi, portoghesi); raro nel Mediterraneo. La sua presenza frequente nei mercati italiani indica quasi sempre prodotto di importazione atlantica."},
+    ]
+  },
+  {
+    title:"Tagli Gastronomici, Razze Ovine e Caprine",
+    subtitle:"Sezione 10 (Avanzato) — Tagli dell'agnello e conoscenza delle razze",
+    advanced:true,
+    qs:[
+      {n:105,type:"mc",q:"Cos'è il 'Baron' (o Barone) di agnello e da quale combinazione di parti anatomiche si compone?",opts:["La sella anteriore comprendente il collo e le prime sei coste","Il taglio posteriore comprendente la groppa (doppio carré basso) e i due cosciotti (gigot) — riferito a ovini adulti, non agli agnellini","Il filetto intero dell'agnello, disossato e pronto per la cottura","Le due spalle anteriori dell'agnello con osso, tagliate insieme"],correct:1,exp:"Baron (o Barone) di agnello: taglio posteriore comprendente la groppa (doppio carré basso) e i due cosciotti (gigot). Si riferisce a ovini adulti, non agli agnellini. È uno dei tagli più spettacolari per le preparazioni al forno in occasioni importanti."},
+      {n:106,type:"mc",q:"Qual è la differenza anatomica tra il Carré alto 'a coste scoperte' e il Carré basso 'a coste coperte' nell'agnello?",opts:["Non esiste differenza sostanziale: sono due nomi commerciali regionali per lo stesso taglio","Il Carré alto si ottiene dalla sella con coste visibili e scalzate (coste scoperte — più scenografiche); il Carré basso proviene dalla stessa zona ma con la carne che copre le coste. Entrambi si ottengono dalla lombata","Il Carré alto include le vertebre cervicali; il Carré basso quelle lombari","Il Carré alto si ottiene dalla sella; il Carré basso si ottiene dal petto"],correct:1,exp:"Carré alto 'a coste scoperte': dalla lombata, con le coste visibili, scalzate (liberate dalla carne per il tratto terminale) — più scenografico per il servizio. Carré basso 'a coste coperte': stessa zona ma con la carne che ricopre le coste — meno scenografico ma più gustoso. Entrambi si ottengono dalla sella/lombata."},
+      {n:107,type:"mc",q:"Il Carré '7 coste' è un taglio di servizio molto usato in ristorazione. Come si ottiene esattamente?",opts:["Selezionando le 7 coste più carnose dalla mezza carcassa","Dal Carré alto 'a coste scoperte', disossato e scalzato: si ricavano le prime 7 coste con la carne relativa, pronto per la cottura e la porzionatura scenografica","Dalle 7 vertebre lombari con la relativa copertura muscolare","Dal taglio trasversale della sella che include sempre e solo 7 coste per lato per normativa"],correct:1,exp:"Carré '7 coste': si ottiene dal Carré alto 'a coste scoperte' ulteriormente lavorato — disossato e scalzato per ottenere un pezzo con 7 coste pulite, pronto per la cottura e la porzionatura in cotolette di agnello. Uno dei tagli più utilizzati in alta ristorazione per la sua versatilità e presentazione."},
+      {n:108,type:"mc",q:"In una brigata di cucina, uno chef chiede il 'Gigot'. Quale parte dell'agnello sta richiedendo?",opts:["Il carré alto con coste scoperte e scalzate","La spalla anteriore con osso","Il cosciotto posteriore (la coscia), taglio corrispondente al termine francese Gigot","Il baron — taglio comprendente entrambe le cosce e la sella bassa"],correct:2,exp:"Gigot = Cosciotto posteriore (la coscia) dell'agnello. Il termine è francese ma universalmente utilizzato in cucina internazionale. Non va confuso con il Baron (che include i due cosciotti + la sella) né con il Carré (dalla lombata)."},
+      {n:109,type:"mc",q:"Devi identificare rapidamente la razza caprina Saanen rispetto alla Camosciata delle Alpi in un allevamento. Quale combinazione di caratteristiche morfologiche le distingue con certezza?",opts:["La Saanen è da carne; la Camosciata da latte — si distinguono solo per l'attitudine produttiva","Saanen: pelo bianco medio-corto, taglia grande (maschi ~90 kg), origine svizzera. Camosciata: pelo corto fulvo con riga mulina (linea dorsale scura) e caratteristica maschera facciale scura, taglia medio-grande. Entrambe da latte ma visivamente inconfondibili","La Saanen è sempre più grande della Camosciata; la Camosciata ha corna sempre assenti","La Saanen è allevata solo in Piemonte; la Camosciata solo in Trentino"],correct:1,exp:"Saanen: pelo bianco medio-corto, taglia grande (maschi ~90 kg, femmine ~60 kg), origine svizzera, da latte, allevata prevalentemente in pianura in sistema stallino. Camosciata delle Alpi: pelo corto e fulvo con riga mulina scura dorsale e maschera facciale scura, taglia medio-grande (maschi fino 100 kg), sistema estensivo alpino. Inconfondibili visivamente."},
+      {n:110,type:"mc",q:"La razza caprina Orobica ha caratteristiche che la rendono particolarmente adatta al suo ambiente originario. Quale combinazione area geografica + morfologia è corretta?",opts:["Sicilia (Girgenti) — corna a spirale molto pronunciata e allungata","Zona alpina Orobica (provincie di Sondrio, Lecco, Como, Bergamo) — pelo fine e molto lungo con colorazioni variegate, adatto all'ambiente montano alpino","Sardegna — pelo corto e uniforme di colore bianco-grigio","Campania (Cilento) — corna piatte e ricurve verso il basso"],correct:1,exp:"Orobica: origini incerte, area alpina Orobica (Sondrio, Lecco, Como, Bergamo), attitudine mista latte-carne, caratteristica fondamentale il pelo fine e MOLTO lungo con colorazioni variegate (diversamente dalla Saanen tutta bianca). Adatta agli ambienti montani impervi."},
+      {n:111,type:"mc",q:"La razza ovina Bergamasca è classificata 'da carne'. Quali prestazioni zootecniche specifiche e quale sistema di allevamento la contraddistinguono?",opts:["Agnellone di 8-8,5 kg a 30 giorni; sistema stallino intensivo","Agnellone di 30-37 kg in 90-120 giorni (o castrato fino a 80 kg in 16 mesi); taglia grande (maschi adulti > 100 kg); sistema estensivo a piccola transumanza verticale o brado","Agnellone di 15 kg a 30 giorni; sistema a grande transumanza orizzontale","Produzione mista latte-carne con 100 kg di latte in 180 giorni e agnellone di 20 kg a 90 giorni"],correct:1,exp:"Bergamasca: agnellone di 30-37 kg in 90-120 giorni (o castrato fino a 80 kg in 16 mesi); maschi adulti > 100 kg; sistema estensivo a piccola transumanza verticale o brado — performance da carne superiori grazie alle grandi dimensioni."},
+      {n:112,type:"mc",q:"La razza ovina Barbaresca deriva da un incrocio tra due razze specifiche con influenza geografica estera. Quale è la combinazione corretta?",opts:["Incrocio tra razza Sarda e Merina — influenza spagnola","Incrocio tra razze Barbarin e Pinzirita — con influenza tunisina / nordafricana; allevata principalmente in Sicilia e Italia meridionale","Incrocio tra Bergamasca e Suffolk — influenza britannica","Incrocio tra Delle Langhe e Comisana — entrambe razze italiane"],correct:1,exp:"Barbaresca: incrocio tra razze Barbarin e Pinzirita — con influenza tunisina / nordafricana; allevata principalmente in Sicilia e Italia meridionale."},
+    ]
+  },
+  {
+    title:"Gestione della Selvaggina in Cucina",
+    subtitle:"Sezione 11 (Avanzato) — Sicurezza alimentare, flussi e frollatura",
+    advanced:true,
+    qs:[
+      {n:113,type:"mc",q:"Le carni di selvaggina abbattuta richiedono una sequenza operativa precisa per mantenere qualità e sicurezza. Qual è l'ordine CORRETTO delle operazioni?",opts:["Stoccaggio in freezer → eviscerazione → dissanguamento → frollatura → sezionamento","Eviscerazione e dissanguamento RAPIDI sul campo → stoccaggio in cella frigorifera nel più breve tempo possibile → frollatura → sezionamento e lavorazione in ambienti igienici idonei → stoccaggio in cella/freezer","Frollatura immediata a temperatura ambiente → eviscerazione → stoccaggio in cella → sezionamento","Dissanguamento → sezionamento immediato → freezer → frollatura a temperatura di servizio"],correct:1,exp:"L'ordine corretto: eviscerazione e dissanguamento RAPIDI sul campo (fondamentale per la qualità) → cella frigorifera il prima possibile → frollatura controllata → sezionamento e lavorazione in ambienti igienici idonei → stoccaggio in cella/freezer. Ogni inversione di questo ordine compromette qualità e sicurezza alimentare."},
+      {n:114,type:"mc",q:"Il flusso logistico della selvaggina cacciata all'interno di una struttura di ristorazione o lavorazione segue un percorso specifico. Qual è la sequenza corretta?",opts:["Cucina → cella di raccolta in pelle/penna → spellatura/sezionamento → dispensa → servizio","Ingresso materie prime → Cella di raccolta (in pelle/penna) → Locale di spellatura e sezionamento → Frigorifero dispensa (carne in tagli) → Cucina","Ingresso → cucina → abbattitore → celle → servizio","Magazzino secco → cella di raccolta → cucina → abbattitore → dispensa"],correct:1,exp:"Flusso logistico corretto: Ingresso materie prime → Cella di raccolta (in pelle/penna) → Locale di spellatura e sezionamento → Frigorifero dispensa (carne in tagli) → Cucina. Questo percorso garantisce il principio di marcia in avanti (no contaminazioni crociate) e la corretta igiene degli ambienti di lavoro."},
+      {n:115,type:"mc",q:"Perché la 'frollatura' è un passaggio indispensabile nella gestione della selvaggina da pelo, e cosa avviene chimicamente durante questo processo?",opts:["La frollatura serve solo a igienizzare esternamente le carni prima della lavorazione","Durante la frollatura (maturazione a bassa temperatura controllata), gli enzimi muscolari naturali (catepsine e calpaine) rompono le proteine delle fibre muscolari, aumentando la tenerezza e sviluppando i composti aromatici caratteristici della selvaggina — senza frollatura le carni sono dure e insipide","La frollatura è semplicemente il periodo di congelamento a -18°C prima della cottura","La frollatura rimuove il grasso intramuscolare in eccesso che renderebbe le carni troppo pesanti"],correct:1,exp:"Durante la frollatura (maturazione a bassa temperatura controllata), gli enzimi muscolari naturali (catepsine e calpaine) rompono le proteine delle fibre muscolari, aumentando la tenerezza e sviluppando i composti aromatici caratteristici della selvaggina. Senza frollatura le carni sono dure e insipide — passaggio indispensabile, non facoltativo."},
+      {n:116,type:"mc",q:"Un ristoratore riceve un cinghiale da cacciatore. Dopo aver verificato il Mod. 1 e la documentazione per Trichinella, trova che il peso dell'animale è 44 kg. Quale considerazione pratica è più rilevante per la gestione in cucina di questo volume di carne?",opts:["Un cinghiale di 44 kg è troppo piccolo per la ristorazione professionale: vanno preferiti esemplari di almeno 80 kg","Le carni di selvaggina abbattuta devono seguire una catena del freddo rigorosa (eviscerazione rapida sul campo, cella frigorifera immediata, frollatura controllata, sezionamento in ambienti igienici idonei, stoccaggio in cella/freezer); il volume implica pianificazione di menu e gestione dello spazio frigorifero — il tutto con tracciabilità documentata conservata dal ristoratore","Il cinghiale va immediatamente surgelato intero per preservare le carni; lo scongelamento avverrà in cucina il giorno dell'utilizzo","Non esistono obblighi specifici per i ristoratori nella gestione interna della selvaggina, una volta ricevuto il Mod. 1"],correct:1,exp:"44 kg di cinghiale è un volume significativo che richiede: catena del freddo rigorosa (eviscerazione rapida sul campo, cella frigorifera immediata, frollatura controllata, sezionamento in ambienti igienici idonei, stoccaggio in cella/freezer); pianificazione del menu e dello spazio frigorifero; tracciabilità documentata conservata dal ristoratore. Il Mod. 1 e il certificato Trichinella rimangono obbligatori."},
+    ]
+  }
+];
+
+const STORAGE_KEY = 'quiz_paolo_v1';
+let state = {answers:{}, marked:{}};
+function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}}
+function loadState(){try{const s=localStorage.getItem(STORAGE_KEY);if(s)state=JSON.parse(s);}catch(e){}}
+
+function buildQuiz(){
+  const main=document.getElementById('quiz-main');
+  main.innerHTML='';
+  const labels=['A','B','C','D'];
+  chapters.forEach((ch,ci)=>{
+    const chDiv=document.createElement('div');
+    chDiv.className='chapter-section';
+    if(ch.sectionBreak){
+      const totalBase=chapters.filter(c=>!c.advanced).reduce((a,c)=>a+c.qs.length,0);
+      const totalAdv=chapters.filter(c=>c.advanced).reduce((a,c)=>a+c.qs.length,0);
+      chDiv.insertAdjacentHTML('beforeend',`
+        <div class="section-divider">
+          <div class="section-divider-banner">
+            <div class="adv-badge">🎯 Sezioni Avanzate</div>
+            <div class="adv-title">Analisi Critica e Approfondimenti</div>
+            <div class="adv-subtitle">Queste sezioni richiedono di collegare concetti, applicarli a scenari reali e ragionare come professionisti della cucina. Nessuna scorciatoia — tutte le opzioni errate sono plausibili.</div>
+            <div class="adv-stats">
+              <div class="adv-stat"><span class="adv-stat-num">${totalAdv}</span>&nbsp;domande avanzate</div>
+              <div class="adv-stat"><span class="adv-stat-num">5</span>&nbsp;sezioni</div>
+              <div class="adv-stat"><span class="adv-stat-num">${totalBase+totalAdv}</span>&nbsp;domande totali</div>
+            </div>
+          </div>
+        </div>`);
+    }
+    const isAdv=!!ch.advanced;
+    const lineClass=isAdv?'chapter-line adv':'chapter-line';
+    const labelClass=isAdv?'chapter-label adv':'chapter-label';
+    const capLabel=isAdv?`Sezione ${ci+1} — Avanzato`:`Sezione ${ci+1}`;
+    chDiv.insertAdjacentHTML('beforeend',`
+      <div class="chapter-header">
+        <div class="${lineClass}"></div>
+        <div class="${labelClass}">${capLabel}</div>
+        <div class="${lineClass}"></div>
+      </div>
+      <h2 class="chapter-title">${ch.title}</h2>
+      <p class="chapter-subtitle">${ch.subtitle}</p>`);
+    ch.qs.forEach(q=>{
+      const card=document.createElement('div');
+      card.className='question-card'+(isAdv?' adv-card':'');
+      card.id=`q${q.n}`;
+      const ans=state.answers[q.n];
+      const isMarked=!!state.marked[q.n];
+      if(ans!==undefined) card.classList.add(ans===q.correct?'answered-correct':'answered-wrong');
+      if(isMarked) card.classList.add('marked');
+      const numClass=isAdv?'q-number adv':'q-number';
+      let innerHtml=`
+        <div class="q-meta">
+          <span class="${numClass}">Q${q.n}</span>
+          <span class="q-type-badge">${q.type==='vf'?'Vero / Falso':'Scelta multipla'}</span>
+          ${ans!==undefined?`<span class="answered-stamp ${ans===q.correct?'ok':'ko'}">${ans===q.correct?'✓ Corretto':'✗ Sbagliato'}</span>`:''}
+          <button class="mark-btn ${isMarked?'active':''}" onclick="toggleMark(${q.n})" title="Segna per revisione">🔖</button>
+        </div>
+        <div class="q-text">${q.q}</div>`;
+      const isAnswered=ans!==undefined;
+      if(q.type==='mc'){
+        innerHtml+=`<div class="options">`;
+        q.opts.forEach((opt,oi)=>{
+          let cls='';
+          if(isAnswered){if(oi===q.correct)cls='correct';else if(oi===ans)cls='wrong';}
+          const icon=isAnswered?(oi===q.correct?' <span class="opt-icon">✓</span>':(oi===ans?' <span class="opt-icon">✗</span>':'')):'';
+          innerHtml+=`<button class="option-btn ${cls}" ${isAnswered?'disabled':''} onclick="answer(${q.n},${oi})">
+            <span class="opt-letter">${labels[oi]}</span><span>${opt}</span>${icon}
+          </button>`;
+        });
+        innerHtml+=`</div>`;
+      }else{
+        innerHtml+=`<div class="vf-options">`;
+        [true,false].forEach((val,i)=>{
+          let cls='';
+          if(isAnswered){if(val===q.correct)cls='correct';else if(val===ans)cls='wrong';}
+          innerHtml+=`<button class="vf-btn ${cls}" ${isAnswered?'disabled':''} onclick="answer(${q.n},${val})">${val?'✓ Vero':'✗ Falso'}</button>`;
+        });
+        innerHtml+=`</div>`;
+      }
+      if(isAnswered){
+        const isCorrect=ans===q.correct;
+        const correctLabel=q.type==='vf'?(q.correct?'Vero':'Falso'):`${labels[q.correct]}) ${q.opts[q.correct]}`;
+        innerHtml+=`<div class="feedback ${isCorrect?'correct-fb':'wrong-fb'} show">
+          <strong>${isCorrect?'✓ Risposta corretta!':'✗ Risposta errata'}</strong>
+          ${!isCorrect?`<span class="correct-answer">Risposta corretta: ${correctLabel}</span>`:''}
+          ${q.exp}
+        </div>`;
+      }else{
+        innerHtml+=`<div class="feedback" id="fb${q.n}"></div>`;
+      }
+      card.innerHTML=innerHtml;
+      chDiv.appendChild(card);
+    });
+    main.appendChild(chDiv);
+  });
+  updateProgress();
+}
+
+function answer(qn,val){
+  const allQs=chapters.flatMap(c=>c.qs);
+  const q=allQs.find(x=>x.n===qn);
+  if(!q||state.answers[qn]!==undefined)return;
+  state.answers[qn]=val;
+  saveState();
+  const card=document.getElementById(`q${qn}`);
+  const isCorrect=val===q.correct;
+  card.classList.add(isCorrect?'answered-correct':'answered-wrong');
+  card.querySelectorAll('.option-btn,.vf-btn').forEach(btn=>{btn.disabled=true;});
+  const labels=['A','B','C','D'];
+  if(q.type==='mc'){
+    card.querySelectorAll('.option-btn').forEach((btn,i)=>{
+      if(i===q.correct){btn.classList.add('correct');btn.insertAdjacentHTML('beforeend','<span class="opt-icon">✓</span>');}
+      else if(i===val){btn.classList.add('wrong');btn.insertAdjacentHTML('beforeend','<span class="opt-icon">✗</span>');}
+    });
+  }else{
+    card.querySelectorAll('.vf-btn').forEach((btn,i)=>{
+      const bval=i===0;
+      if(bval===q.correct)btn.classList.add('correct');
+      else if(bval===val)btn.classList.add('wrong');
+    });
+  }
+  const correctLabel=q.type==='vf'?(q.correct?'Vero':'Falso'):`${labels[q.correct]}) ${q.opts[q.correct]}`;
+  const fb=card.querySelector('.feedback');
+  if(fb){
+    fb.className=`feedback ${isCorrect?'correct-fb':'wrong-fb'} show`;
+    fb.innerHTML=`<strong>${isCorrect?'✓ Risposta corretta!':'✗ Risposta errata'}</strong>
+      ${!isCorrect?`<span class="correct-answer">Risposta corretta: ${correctLabel}</span>`:''}
+      ${q.exp}`;
+  }
+  const meta=card.querySelector('.q-meta');
+  const existing=meta.querySelector('.answered-stamp');
+  if(existing)existing.remove();
+  const stamp=document.createElement('span');
+  stamp.className=`answered-stamp ${isCorrect?'ok':'ko'}`;
+  stamp.textContent=isCorrect?'✓ Corretto':'✗ Sbagliato';
+  meta.insertBefore(stamp,meta.querySelector('.mark-btn'));
+  updateProgress();
+  showToast(isCorrect?'✓ Corretto!':'✗ Sbagliato');
+}
+
+function toggleMark(qn){
+  if(state.marked[qn]){delete state.marked[qn];}else{state.marked[qn]=true;}
+  saveState();
+  const btn=document.querySelector(`#q${qn} .mark-btn`);
+  const card=document.getElementById(`q${qn}`);
+  if(btn)btn.classList.toggle('active',!!state.marked[qn]);
+  if(card)card.classList.toggle('marked',!!state.marked[qn]);
+  showToast(state.marked[qn]?'🔖 Segnata per revisione':'🔖 Segnalazione rimossa');
+}
+
+function filterQuestions(type){
+  const allQs=chapters.flatMap(c=>c.qs);
+  document.querySelectorAll('.question-card').forEach(card=>{
+    const qn=parseInt(card.id.replace('q',''));
+    const q=allQs.find(x=>x.n===qn);
+    let show=true;
+    if(type==='unanswered')show=state.answers[qn]===undefined;
+    else if(type==='marked')show=!!state.marked[qn];
+    else if(type==='wrong')show=state.answers[qn]!==undefined&&state.answers[qn]!==q.correct;
+    card.classList.toggle('hidden',!show);
+  });
+  document.querySelectorAll('.chapter-section').forEach(sec=>{
+    const cards=sec.querySelectorAll('.question-card');
+    const anyVisible=Array.from(cards).some(c=>!c.classList.contains('hidden'));
+    sec.style.display=anyVisible?'':'none';
+  });
+  const counts={all:'tutte',unanswered:'da rispondere',marked:'segnate',wrong:'sbagliate'};
+  showToast(`Filtro: ${counts[type]}`);
+}
+
+function updateProgress(){
+  const allQs=chapters.flatMap(c=>c.qs);
+  const total=allQs.length;
+  const answered=Object.keys(state.answers).length;
+  const correct=allQs.filter(q=>state.answers[q.n]===q.correct).length;
+  document.getElementById('score-badge').textContent=`${correct} / ${answered}`;
+  document.getElementById('progress-bar').style.width=`${(answered/total)*100}%`;
+}
+
+function showResults(){
+  const allQs=chapters.flatMap(c=>c.qs);
+  const total=allQs.length;
+  const answered=Object.keys(state.answers).length;
+  const correct=allQs.filter(q=>state.answers[q.n]===q.correct).length;
+  const wrong=answered-correct;
+  const pct=answered>0?Math.round((correct/answered)*100):0;
+  const emoji=pct>=85?'🎉':pct>=65?'💪':'📚';
+  const scoreClass=pct>=85?'good':pct>=65?'ok':'';
+  const msg=pct>=85?'Ottimo risultato!':pct>=65?'Buon lavoro!':'Continua a studiare!';
+  const baseChaps=chapters.filter(c=>!c.advanced);
+  const advChaps=chapters.filter(c=>c.advanced);
+  function chScore(ch){
+    const c=ch.qs.filter(q=>state.answers[q.n]===q.correct).length;
+    const a=ch.qs.filter(q=>state.answers[q.n]!==undefined).length;
+    return `${c}/${a}`;
+  }
+  let html=`
+    <div class="results-emoji">${emoji}</div>
+    <div class="results-title">${msg}</div>
+    <div class="results-score-big ${scoreClass}">${pct}%</div>
+    <div class="results-sub">${correct} corrette su ${answered} risposte (${total-answered} non risposte)</div>
+    <div class="results-breakdown">
+      <div class="breakdown-item green"><span class="bi-num">${correct}</span><span class="bi-label">Corrette</span></div>
+      <div class="breakdown-item red"><span class="bi-num">${wrong}</span><span class="bi-label">Sbagliate</span></div>
+      <div class="breakdown-item yellow"><span class="bi-num">${total-answered}</span><span class="bi-label">Non risposte</span></div>
+      <div class="breakdown-item"><span class="bi-num">${total}</span><span class="bi-label">Totale</span></div>
+    </div>
+    <div class="results-section-label">Sezioni Base — 1–6</div>`;
+  baseChaps.forEach(ch=>{html+=`<div class="results-chapter"><span>${ch.title}</span><span class="ch-score">${chScore(ch)}</span></div>`;});
+  html+=`<div class="results-section-label adv">🎯 Sezioni Avanzate — 7–11</div>`;
+  advChaps.forEach(ch=>{html+=`<div class="results-chapter adv-chapter"><span>${ch.title}</span><span class="ch-score">${chScore(ch)}</span></div>`;});
+  html+=`<div class="results-actions">
+    <button class="res-btn secondary" onclick="document.getElementById('results-panel').classList.remove('show')">← Chiudi</button>
+    <button class="res-btn primary" onclick="confirmReset()">🔄 Ricomincia</button>
+  </div>`;
+  document.getElementById('results-box').innerHTML=html;
+  document.getElementById('results-panel').classList.add('show');
+}
+
+function confirmReset(){
+  if(confirm('Vuoi davvero ricominciare? Tutti i progressi verranno persi.')){
+    state={answers:{},marked:{}};
+    saveState();
+    document.getElementById('results-panel').classList.remove('show');
+    buildQuiz();
+    showToast('🔄 Quiz riavviato!');
+  }
+}
+
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+loadState();
+buildQuiz();
+</script>
+</body>
+</html>
